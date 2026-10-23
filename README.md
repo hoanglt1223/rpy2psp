@@ -4,11 +4,11 @@ Convert Ren'Py visual novels into native PSP homebrew. Scripts are compiled on P
 
 ## Status
 
-Early. The script compiler works. The asset pipeline and the PSP engine are not written yet.
+Early. The script compiler and the asset pipeline work on PC. The PSP engine (vnpsp) is not written yet.
 
 - Scope: dialogue-driven visual novels (labels, menus, jumps, images, transitions, music, simple variables). Games that rely on custom Python code or Python-driven screens are reported as unsupported, with file and line. Details: [docs/dev/census.md](docs/dev/census.md).
 - Coverage: the three target games (The Question, Zero Echoes, Arcance) compile fully. Overall, 5 of the 15 games in the census corpus compile.
-- Bytecode format: [docs/dev/bytecode.md](docs/dev/bytecode.md). Prior art: [docs/dev/prior-art.md](docs/dev/prior-art.md).
+- Formats: [docs/dev/bytecode.md](docs/dev/bytecode.md) (script) and [docs/dev/pack-format.md](docs/dev/pack-format.md) (DXT textures, glyph atlases, MP3, PCM and ADPCM). Prior art: [docs/dev/prior-art.md](docs/dev/prior-art.md).
 
 Roadmap: [anyport plans](https://github.com/hoanglt1223/anyport/tree/main/plans/261023-1558-renpy-to-psp).
 
@@ -20,9 +20,13 @@ Python 3.11 or later.
 pip install -r requirements.txt
 python -m rpy2psp compile path/to/game -o out/            # script.vnb + manifest.json, or errors with file:line
 python -m rpy2psp compile path/to/game -o out/ --language japanese
+python -m rpy2psp pack path/to/game -o out/ --font-dir <Ren'Py SDK>/renpy/common   # data.pak
+python -m rpy2psp verify path/to/game -o out/ --font-dir <Ren'Py SDK>/renpy/common # decode back and compare
 python -m rpy2psp disasm out/script.vnb
 python -m rpy2psp coverage --manifest tools/census/games.json --games-dir <corpus>
 ```
+
+Windows builds are attached to GitHub releases (`rpy2psp.exe`, no Python needed). Ren'Py's default font (DejaVuSans) and the CJK font (SourceHanSansLite) come with the Ren'Py SDK, not with games, so pass `--font-dir` when a game relies on them. Movie conversion needs ffmpeg on PATH.
 
 The game folder is the one that contains `game/`, or `game/` itself. The compiler reads `.rpy` sources. When only compiled scripts are available, it reads `.rpyc` files and `.rpa` archives. A restricted decoder handles them, and game code is never executed.
 

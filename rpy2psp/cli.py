@@ -46,6 +46,70 @@ def cmd_disasm(args):
     return 0
 
 
+def _pack_options(args):
+    from .assets.pack import PackOptions
+    return PackOptions(font_dirs=args.font_dir or [], font_size=args.font_size, name_font_size=args.font_size,
+                       pcm_limit=args.pcm_limit, fallback_font=args.fallback_font)
+
+
+def _load_manifest(args):
+    path = args.manifest or os.path.join(args.out, "manifest.json")
+    if not os.path.exists(path):
+        raise SystemExit(f"{path} not found; run `rpy2psp compile` first")
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def cmd_pack(args):
+    from .assets.images import AssetError
+    from .assets.pack import build_pack
+    from .compiler.reader import load_game
+    manifest = _load_manifest(args)
+    game = load_game(args.game)
+    try:
+        data, report_ = build_pack(game, manifest, _pack_options(args))
+    except AssetError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    finally:
+        game.close()
+    path = os.path.join(args.out, "data.pak")
+    with open(path, "wb") as f:
+        f.write(data)
+    kinds = ", ".join(f"{k} {v / 1024:.0f} KiB" for k, v in sorted(report_["by_kind"].items()))
+    print(f"wrote {path}: {report_['entries']} entries, {len(data) / 1048576:.2f} MiB ({kinds})")
+    return 0
+
+
+def cmd_verify(args):
+    from .assets.pack import verify_pack
+    from .compiler.reader import load_game
+    manifest = _load_manifest(args)
+    with open(os.path.join(args.out, "data.pak"), "rb") as f:
+        data = f.read()
+    game = load_game(args.game)
+    try:
+        summary, failures = verify_pack(data, game, manifest, _pack_options(args))
+    finally:
+        game.close()
+    imgs = summary["image"]
+    if imgs:
+        print(f"images: {len(imgs)}, PSNR min {min(m['psnr'] for m in imgs):.1f} dB, "
+              f"mean {sum(min(m['psnr'], 99) for m in imgs) / len(imgs):.1f} dB, "
+              f"alpha error max mean {max(m['alpha_mean'] for m in imgs):.2f}")
+    for m in summary["music"]:
+        print(f"music {m['key']}: MPEG-{m['header'][0]} layer {m['header'][1]} {m['header'][2]} kbps "
+              f"{m['header'][3]} Hz, SNR {m['snr']:.1f} dB, duration diff {m['duration_diff'] * 1000:.0f} ms")
+    for m in summary["sfx"]:
+        print(f"sound {m['key']}: {'PCM16' if m['codec'] == 0 else 'IMA ADPCM'}, SNR {m['snr']:.1f} dB")
+    for m in summary["font"]:
+        print(f"font {m['key']}: {m['glyphs']} glyphs on {m['pages']} page(s), {m['mismatches']} mismatches, "
+              f"{m['missing']} missing")
+    for f_ in failures:
+        print("FAIL", f_)
+    return 1 if failures else 0
+
+
 def coverage_rows(games, games_dir):
     rows = []
     for g in games:
@@ -103,6 +167,17 @@ def main(argv=None):
     p.add_argument("-o", "--out", required=True)
     p.add_argument("--language", help="translation compiled in (tl/<language>)")
     p.set_defaults(fn=cmd_compile)
+    for name, fn, text in (("pack", cmd_pack, "convert the assets in manifest.json into data.pak"),
+                           ("verify", cmd_verify, "decode data.pak back and compare it with the sources")):
+        p = sub.add_parser(name, help=text)
+        p.add_argument("game")
+        p.add_argument("-o", "--out", required=True, help="folder with manifest.json (data.pak goes here)")
+        p.add_argument("--manifest")
+        p.add_argument("--font-dir", action="append", help="extra folder to search for fonts (repeatable)")
+        p.add_argument("--fallback-font", help="font for characters the game font lacks")
+        p.add_argument("--font-size", type=int, default=14)
+        p.add_argument("--pcm-limit", type=float, default=1.0, help="effects up to this many seconds stay PCM")
+        p.set_defaults(fn=fn)
     p = sub.add_parser("disasm", help="print a readable listing of script.vnb")
     p.add_argument("file")
     p.set_defaults(fn=cmd_disasm)

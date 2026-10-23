@@ -1,0 +1,57 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install pyinstaller==6.22.3 pyinstaller-hooks-contrib==2026.9
+
+      - name: Tests
+        run: python -m unittest discover -s tests -t .
+
+      - name: Package (PyInstaller, one folder)
+        run: >
+          python -m PyInstaller --noconfirm --onedir --name rpy2psp
+          --workpath "$env:RUNNER_TEMP/pyi-work" --distpath "$env:RUNNER_TEMP/pyi-out"
+          --collect-all soundfile --collect-all etcpak --collect-data archspec
+          --collect-binaries lameenc --collect-binaries soxr
+          packaging/rpy2psp_entry.py
+
+      - name: Smoke test the executable
+        shell: pwsh
+        run: |
+          $exe = "$env:RUNNER_TEMP/pyi-out/rpy2psp/rpy2psp.exe"
+          & $exe --help
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP/smoke/game" | Out-Null
+          Copy-Item tests/compiler/cases/control_flow.rpy "$env:RUNNER_TEMP/smoke/game/script.rpy"
+          & $exe compile "$env:RUNNER_TEMP/smoke" -o "$env:RUNNER_TEMP/smoke-out"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          & $exe disasm "$env:RUNNER_TEMP/smoke-out/script.vnb" | Select-Object -First 5
+
+      - name: Zip
+        shell: pwsh
+        run: |
+          Copy-Item LICENSE, README.md "$env:RUNNER_TEMP/pyi-out/rpy2psp/"
+          Compress-Archive -Path "$env:RUNNER_TEMP/pyi-out/rpy2psp" -DestinationPath "rpy2psp-${{ github.ref_name }}-windows-x64.zip"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" "rpy2psp-${{ github.ref_name }}-windows-x64.zip" --title "${{ github.ref_name }}" --generate-notes

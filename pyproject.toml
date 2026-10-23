@@ -12,6 +12,13 @@ requires-python = ">=3.11"
 # Exact pins; requirements.txt is the matching lock used by CI and the release job.
 dependencies = [
     "pillow==13.0.0",
+    "numpy==2.5.4",
+    "etcpak==0.9.15",
+    "fonttools==4.67.0",
+    "brotli==1.2.1",
+    "lameenc==1.9.0",
+    "soundfile==0.14.0",
+    "soxr==1.1.0",
 ]
 
 [project.scripts]
