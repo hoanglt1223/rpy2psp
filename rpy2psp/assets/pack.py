@@ -175,8 +175,8 @@ def convert_asset(game, key, spec, scale, options):
             raise AssetError(f"audio file {spec['path']!r} not found") from None
         frames, rate = audio.decode_source(data, spec["path"])
         if kind == "music":
-            mp3, _ = audio.encode_mp3(frames, rate)
-            return mp3
+            mp3, pcm = audio.encode_mp3(frames, rate)
+            return audio.music_entry(mp3, len(pcm), pcm.shape[1])
         blob, _, _ = audio.convert_effect(frames, rate, options.pcm_limit)
         return blob
     if kind == "movie":
@@ -309,14 +309,18 @@ def verify_pack(data, game, manifest, options=None):
             if m["psnr"] < 20 or m["alpha_mean"] > 4:
                 failures.append(f"{key}: PSNR {m['psnr']:.1f} dB, alpha error {m['alpha_mean']:.2f}")
         elif spec["kind"] == "music":
-            version, layer, br, sr = audio.check_mp3_header(blob)
+            mp3, length, delay, chans = audio.read_music_entry(blob)
+            version, layer, br, sr = audio.check_mp3_header(mp3)
             frames, rate = audio.decode_source(game.read(spec["path"]), spec["path"])
             ref = audio.to_int16(audio.resample(frames, rate, 44100))
-            m = audio.verify_mp3(blob, ref)
+            m = audio.verify_mp3(mp3, ref)
             m.update(key=key, header=(version, layer, br, sr))
             summary["music"].append(m)
-            if (version, layer, br, sr) != (1, 3, 128, 44100) or abs(m["duration_diff"]) > 0.1 or m["snr"] < 10:
-                failures.append(f"{key}: MP3 check failed {m}")
+            # A silent intro defeats the cross-correlation, so the stored delay is only
+            # checked against it when the measured lag is meaningful.
+            if ((version, layer, br, sr) != (1, 3, 128, 44100) or abs(m["duration_diff"]) > 0.1 or m["snr"] < 10
+                    or length != len(ref) or chans != ref.shape[1] or m["lag"] not in (0, delay)):
+                failures.append(f"{key}: MP3 check failed {m}, header length {length} delay {delay}")
         elif spec["kind"] in ("sfx", "voice"):
             frames, rate = audio.decode_source(game.read(spec["path"]), spec["path"])
             _, ref, codec = audio.convert_effect(frames, rate, options.pcm_limit)

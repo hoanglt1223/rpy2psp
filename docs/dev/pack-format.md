@@ -98,7 +98,18 @@ Pixel formats:
 
 ## Music
 
-Music entries are a plain MP3 stream: MPEG-1 Layer III, 44.1 kHz, 128 kbps CBR, encoded with LAME. The source channel count is kept. The PSP Media Engine decodes it through `sceMp3`.
+Music entries are a 16-byte `MUS1` header followed by an MP3 stream: MPEG-1 Layer III, 44.1 kHz, 128 kbps CBR, encoded with LAME. The source channel count is kept.
+
+| Field | Type |
+|---|---|
+| magic | `char[4]` `MUS1` |
+| frames | u32: length of the source in sample frames at 44.1 kHz |
+| delay | u16: decoded frames to drop before the first source frame (1105: LAME's 576 plus the decoder's 529) |
+| channels | u8 |
+| reserved | u8 |
+| sample rate | u32 (44100) |
+
+The engine decodes the stream with minimp3, drops `delay` frames, plays exactly `frames` frames, and for a looping track starts again from the first MP3 frame. Loops are therefore gapless.
 
 ## Sound effects and voice: `SND1`
 
@@ -142,7 +153,7 @@ Conversion needs ffmpeg on PATH. None of the target games uses movies. Whether t
 |---|---|---|
 | Images | Independent DXT decoder with the GE's semantics; PSNR of the displayed (premultiplied) colour and alpha error, against the scaled source | PSNR is below 20 dB or mean alpha error is above 4 |
 | Fonts | Every glyph is unswizzled, unpacked, and compared with a fresh render | Any glyph differs |
-| Music | The MP3 header is parsed, then the stream is decoded with libsndfile, aligned by cross-correlation (encoder delay), and the SNR and duration measured | The header is not 1/3/128/44100, the duration differs by more than 0.1 s, or SNR is below 10 dB |
+| Music | The MP3 header is parsed, then the stream is decoded with libsndfile, aligned by cross-correlation (encoder delay), and the SNR and duration measured | The header is not 1/3/128/44100, the duration differs by more than 0.1 s, SNR is below 10 dB, the `MUS1` length or channel count differs from the source, or a measurable lag differs from the stored delay |
 | Effects | Decoded and compared with the resampled source | PCM is not identical, or ADPCM SNR is below 20 dB |
 
 The unit tests also check the GE decoder against Pillow's standard DDS decoder. Alpha must be identical, and RGB may differ only by the 0-7 expansion offset.

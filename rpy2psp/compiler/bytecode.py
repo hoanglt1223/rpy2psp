@@ -7,15 +7,15 @@ import hashlib
 import struct
 
 MAGIC = b"VNB1"
-VERSION = 1
+VERSION = 2
 NONE16 = 0xFFFF
 NONE32 = 0xFFFFFFFF
 
-# Operand codes: b u8, h u16, i i32, f f32, s string id (u32), v symbol (u16),
+# Operand codes: b u8, h u16, i i32, f f32, d f64, s string id (u32), v symbol (u16),
 # a code address (u32), S u8 count + string ids, M u8 count + (string id, address) pairs.
 OPCODES = [
     ("NOP", ""), ("PUSH_NONE", ""), ("PUSH_TRUE", ""), ("PUSH_FALSE", ""),
-    ("PUSH_INT", "i"), ("PUSH_FLOAT", "f"), ("PUSH_STR", "s"),
+    ("PUSH_INT", "i"), ("PUSH_FLOAT", "d"), ("PUSH_STR", "s"),
     ("LOAD", "v"), ("STORE", "v"), ("STORE_DEFAULT", "v"), ("POP", ""), ("DUP", ""),
     ("BUILD_LIST", "h"), ("BUILD_TUPLE", "h"), ("BUILD_DICT", "h"), ("BUILD_SET", "h"),
     ("SUBSCR", ""), ("SLICE", ""), ("STORE_SUBSCR", ""),
@@ -98,6 +98,8 @@ class Assembler:
                 self.code += struct.pack("<i", v)
             elif c == "f":
                 self.code += struct.pack("<f", v)
+            elif c == "d":
+                self.code += struct.pack("<d", v)
             elif c == "s":
                 self.code += struct.pack("<I", NONE32 if v is None else self.strings.intern(v))
             elif c == "a":
@@ -160,6 +162,8 @@ def decode_ops(code, strings=None):
                 vals.append(struct.unpack_from("<i", code, pos)[0]); pos += 4
             elif c == "f":
                 vals.append(struct.unpack_from("<f", code, pos)[0]); pos += 4
+            elif c == "d":
+                vals.append(struct.unpack_from("<d", code, pos)[0]); pos += 8
             elif c in "sa":
                 vals.append(struct.unpack_from("<I", code, pos)[0]); pos += 4
             elif c == "S":
@@ -322,6 +326,8 @@ def build_container(prog):
              (b"IMGS", bytes(images)), (b"DISP", bytes(disps)), (b"TRFM", bytes(trs)),
              (b"TRAN", bytes(trans)), (b"SHOW", bytes(shows)), (b"AUDI", bytes(audio)),
              (b"CHAN", bytes(chans)), (b"ASET", bytes(assets))]
+    meta = [prog.config.get(k) for k in ("name", "version")]
+    secs.append((b"META", b"".join(_u32(st.intern(str(v)) if v else None) for v in meta)))
     secs.append((b"STRS", _pack_strings(st.items)))
 
     header_len = 12 + 12 * len(secs)
@@ -378,7 +384,7 @@ def disassemble(code, strings, symbols, label_names=None):
                 parts.append(symbols[v])
             elif c == "a":
                 parts.append(f"@{v}" + (f"<{label_names[v]}>" if v in label_names else ""))
-            elif c == "f":
+            elif c in "fd":
                 parts.append(f"{v:g}")
             elif c == "S":
                 parts.append("[" + ", ".join(repr(strings[s]) for s in v) + "]")

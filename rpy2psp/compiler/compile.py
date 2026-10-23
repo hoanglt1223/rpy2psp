@@ -2066,7 +2066,10 @@ class Compiler:
             "config": {k: v for k, v in self.config.items() if k not in ("fonts",)},
             "fonts": fonts,
             "text_fonts": sorted(self.text_fonts),
-            "glyphs": "".join(sorted(set("".join(self.texts)) | set(chr(c) for c in range(32, 127)))),
+            # The engine's main menu shows the title and version (META section).
+            "glyphs": "".join(sorted(set("".join(self.texts)) | set(chr(c) for c in range(32, 127))
+                                     | set("".join(str(self.config[k]) for k in ("name", "version")
+                                                   if self.config.get(k))))),
             "assets": {k: self.assets[k] for k, _ in sorted(self.asset_index.items(), key=lambda x: x[1])},
             "scenes": {k: sorted(v) for k, v in sorted(self.scene_assets.items())},
         }

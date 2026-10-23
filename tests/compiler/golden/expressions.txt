@@ -38,56 +38,56 @@ start:
    114  PUSH_STR 'str'
    119  SUBSCR
    120  PUSH_FLOAT 2.5
-   125  BINARY MUL
-   127  PUSH_INT 1
-   132  BINARY SUB
-   134  PUSH_INT 7
-   139  BINARY MOD
-   141  STORE ratio
-   144  PUSH_INT 1
-   149  PUSH_INT 6
-   154  CALL_FN renpy.random.randint 2
-   157  PUSH_INT 5
-   162  PUSH_INT 6
-   167  BUILD_TUPLE 2
-   170  COMPARE IN
-   172  STORE lucky
-   175  PUSH_STR 'start'
-   180  CALL_FN renpy.has_label 1
-   183  JUMP_IF_FALSE_OR_POP @201
-   188  LOAD inventory
-   191  CALL_FN len 1
-   194  PUSH_INT 2
-   199  COMPARE GE
-   201  JUMP_IF_TRUE_OR_POP @207
-   206  PUSH_FALSE
-   207  STORE label_ok
-   210  LOAD persistent.endings
-   213  PUSH_INT 1
-   218  BINARY ADD
-   220  STORE persistent.endings
-   223  LOAD inventory
-   226  JUMP_IF_FALSE @245
-   231  LOAD inventory
-   234  PUSH_INT 0
-   239  SUBSCR
-   240  JUMP @246
-   245  PUSH_NONE
-   246  STORE first
-   249  LOAD name
-   252  PUSH_INT 1
-   257  PUSH_INT 3
-   262  SLICE
-   263  STORE part
-   266  PUSH_STR 'Saved '
-   271  LOAD persistent.endings
-   274  CALL_FN str 1
-   277  BINARY ADD
-   279  CALL_FN renpy.notify 1
-   282  POP
-   283  PUSH_TRUE
-   284  STORE mobile
-   287  SAY 0 'Stats: [stats[str]] [name!u]' - 1
-   297  RETURN
-   298  RETURN
+   129  BINARY MUL
+   131  PUSH_INT 1
+   136  BINARY SUB
+   138  PUSH_INT 7
+   143  BINARY MOD
+   145  STORE ratio
+   148  PUSH_INT 1
+   153  PUSH_INT 6
+   158  CALL_FN renpy.random.randint 2
+   161  PUSH_INT 5
+   166  PUSH_INT 6
+   171  BUILD_TUPLE 2
+   174  COMPARE IN
+   176  STORE lucky
+   179  PUSH_STR 'start'
+   184  CALL_FN renpy.has_label 1
+   187  JUMP_IF_FALSE_OR_POP @205
+   192  LOAD inventory
+   195  CALL_FN len 1
+   198  PUSH_INT 2
+   203  COMPARE GE
+   205  JUMP_IF_TRUE_OR_POP @211
+   210  PUSH_FALSE
+   211  STORE label_ok
+   214  LOAD persistent.endings
+   217  PUSH_INT 1
+   222  BINARY ADD
+   224  STORE persistent.endings
+   227  LOAD inventory
+   230  JUMP_IF_FALSE @249
+   235  LOAD inventory
+   238  PUSH_INT 0
+   243  SUBSCR
+   244  JUMP @250
+   249  PUSH_NONE
+   250  STORE first
+   253  LOAD name
+   256  PUSH_INT 1
+   261  PUSH_INT 3
+   266  SLICE
+   267  STORE part
+   270  PUSH_STR 'Saved '
+   275  LOAD persistent.endings
+   278  CALL_FN str 1
+   281  BINARY ADD
+   283  CALL_FN renpy.notify 1
+   286  POP
+   287  PUSH_TRUE
+   288  STORE mobile
+   291  SAY 0 'Stats: [stats[str]] [name!u]' - 1
+   301  RETURN
+   302  RETURN
 -- warnings --

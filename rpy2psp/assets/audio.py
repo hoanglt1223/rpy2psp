@@ -1,9 +1,10 @@
-"""Audio conversion: music to MP3 for the PSP Media Engine, effects and voice to PCM or IMA ADPCM.
+"""Audio conversion: music to MP3, effects and voice to PCM or IMA ADPCM.
 
 Sources (OGG Vorbis, Opus, MP3, WAV, FLAC) are decoded with libsndfile through
 soundfile, resampled with soxr, and encoded:
 
-- music: MPEG-1 Layer III, 44.1 kHz, 128 kbps CBR (lameenc), decoded on the PSP by sceMp3;
+- music: MPEG-1 Layer III, 44.1 kHz, 128 kbps CBR (lameenc) behind a MUS1 header that
+  records the length and encoder delay, so the engine can loop without a gap;
 - sound effects and voice: 16-bit PCM when shorter than `pcm_limit` seconds, else
   4-bit IMA ADPCM in independent blocks (layout in docs/dev/pack-format.md).
 """
@@ -62,6 +63,27 @@ def encode_mp3(frames, rate, bitrate=128):
     enc.set_quality(2)
     data = enc.encode(np.ascontiguousarray(pcm).tobytes()) + enc.flush()
     return bytes(data), pcm
+
+
+# LAME's encoder delay (576) plus the standard MP3 decoder delay (529): decoded output
+# starts this many frames before the first source sample.
+MP3_DELAY = 1105
+MUSIC_HEADER = struct.Struct("<4sIHBBI")
+
+
+def music_entry(mp3, frames, channels):
+    """MUS1 entry: header, then the MP3 stream (layout in docs/dev/pack-format.md)."""
+    return MUSIC_HEADER.pack(b"MUS1", frames, MP3_DELAY, channels, 0, 44100) + mp3
+
+
+def read_music_entry(blob):
+    """Return (mp3 bytes, source frames, delay, channels)."""
+    if blob[:4] != b"MUS1":
+        raise AssetError("not a MUS1 entry")
+    _, frames, delay, chans, _, rate = MUSIC_HEADER.unpack_from(blob)
+    if rate != 44100:
+        raise AssetError(f"MUS1 sample rate {rate} is not 44100")
+    return blob[MUSIC_HEADER.size:], frames, delay, chans
 
 
 def check_mp3_header(data):

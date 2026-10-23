@@ -17,7 +17,7 @@ All integers are little-endian.
 | Offset | Field |
 |---|---|
 | 0 | `char[4]` magic `VNB1` |
-| 4 | u16 version (1) |
+| 4 | u16 version (2; version 1 stored PUSH_FLOAT as f32) |
 | 6 | u16 reserved (0) |
 | 8 | u32 section count |
 | 12 | section table: `char[4] id`, u32 offset (from file start), u32 size |
@@ -39,6 +39,7 @@ Sections start on 4-byte boundaries. A reader must look sections up by id, not b
 | `AUDI` | u32 count; play records (below) |
 | `CHAN` | u32 count; per channel: `str` name, u8 mixer (0 music, 1 sfx, 2 voice), u8 loops by default |
 | `ASET` | u32 count; per asset: `str` key (the asset pack key), u8 kind (0 image, 1 music, 2 sfx, 3 voice, 4 font, 5 movie) |
+| `META` | `str` game title (`config.name`), `str` game version (`config.version`); either may be none |
 | `STRS` | u32 count, u32 offsets[count] relative to the end of the offset array, then UTF-8 strings each ending in NUL |
 
 Positions are kept in the game's own resolution (`HEAD` source size). The engine scales uniformly by `min(480 / w, 272 / h)` and letterboxes the rest. In transforms, integer pixel values and pixel offsets are in source pixels.
@@ -62,6 +63,7 @@ Each instruction is a u8 opcode followed by its operands. Operand codes:
 | `v` | u16 symbol |
 | `i` | i32 |
 | `f` | f32 |
+| `d` | f64 |
 | `s` | u32 string |
 | `a` | u32 code address |
 | `S` | u8 count, then that many u32 strings |
@@ -72,7 +74,7 @@ Each instruction is a u8 opcode followed by its operands. Operand codes:
 | 0x00 | NOP | - | |
 | 0x01-0x03 | PUSH_NONE / PUSH_TRUE / PUSH_FALSE | - | push a constant |
 | 0x04 | PUSH_INT | i | |
-| 0x05 | PUSH_FLOAT | f | |
+| 0x05 | PUSH_FLOAT | d | f64, so constants keep Python's double precision |
 | 0x06 | PUSH_STR | s | |
 | 0x07 | LOAD | v | push variable |
 | 0x08 | STORE | v | pop into variable |
@@ -95,23 +97,23 @@ Each instruction is a u8 opcode followed by its operands. Operand codes:
 | 0x1E / 0x1F | CALL_DYNAMIC / JUMP_DYNAMIC | - | pop a label name and look it up in `LABL` |
 | 0x20 | RETURN | - | see the program model |
 | 0x21 | BIND | v | pop a value into a label parameter (dynamic scope) |
-| 0x23 | SAY | h char, s text, h transition, b flags | show dialogue; flags bit 0 = wait for the player (otherwise continue at once, as for a menu caption) |
-| 0x24 | SAY_DYNAMIC | h char, h transition, b flags | as SAY, with the text popped from the stack |
-| 0x25 | SAY_ATTRS | h char, b temporary, S attributes | change the attributes of the character's image tag (`e happy "..."`); `temporary` restores them after the next line; for `extend`, applies to the last speaker |
-| 0x26 | MENU | M choices | pop one condition per choice (first choice deepest); show the true ones; jump to the chosen address. If no choice is visible, continue |
-| 0x27 | PAUSE | - | pop a delay (None means wait for a click) |
-| 0x28 | WITH | h transition | run the transition from the last committed screen to the current one; none means commit without animation (`with None`) |
-| 0x29 / 0x2B / 0x2C | SHOW / SCENE / HIDE | h show | SCENE clears the layer first; a none show record is a bare `scene` |
-| 0x2A | SHOW_DYNAMIC | h show | pop an image name string (`show expression`); the record supplies the clauses |
-| 0x2D | PLAY | h audio | play or queue (record flags) |
-| 0x2E | STOP | b channel, f fadeout | fadeout -1 means the channel default |
-| 0x2F | VOICE | h asset | play on the voice channel; it stops at the next interaction unless sustained |
-| 0x30 | VOICE_SUSTAIN | - | |
-| 0x31 | WINDOW | b mode, h transition | modes: show, hide, auto, auto-show, auto-hide |
-| 0x32 | NVL | b mode, h transition | modes: clear, show, hide |
-| 0x33 | MOVIE | h asset | full-screen cutscene (`renpy.movie_cutscene`) |
+| 0x22 | SAY | h char, s text, h transition, b flags | show dialogue; flags bit 0 = wait for the player (otherwise continue at once, as for a menu caption) |
+| 0x23 | SAY_DYNAMIC | h char, h transition, b flags | as SAY, with the text popped from the stack |
+| 0x24 | SAY_ATTRS | h char, b temporary, S attributes | change the attributes of the character's image tag (`e happy "..."`); `temporary` restores them after the next line; for `extend`, applies to the last speaker |
+| 0x25 | MENU | M choices | pop one condition per choice (first choice deepest); show the true ones; jump to the chosen address. If no choice is visible, continue |
+| 0x26 | PAUSE | - | pop a delay (None means wait for a click) |
+| 0x27 | WITH | h transition | run the transition from the last committed screen to the current one; none means commit without animation (`with None`) |
+| 0x28 / 0x2A / 0x2B | SHOW / SCENE / HIDE | h show | SCENE clears the layer first; a none show record is a bare `scene` |
+| 0x29 | SHOW_DYNAMIC | h show | pop an image name string (`show expression`); the record supplies the clauses |
+| 0x2C | PLAY | h audio | play or queue (record flags) |
+| 0x2D | STOP | b channel, f fadeout | fadeout -1 means the channel default |
+| 0x2E | VOICE | h asset | play on the voice channel; it stops at the next interaction unless sustained |
+| 0x2F | VOICE_SUSTAIN | - | |
+| 0x30 | WINDOW | b mode, h transition | modes: show, hide, auto, auto-show, auto-hide |
+| 0x31 | NVL | b mode, h transition | modes: clear, show, hide |
+| 0x32 | MOVIE | h asset | full-screen cutscene (`renpy.movie_cutscene`) |
 
-Opcode 0x22 is unassigned.
+Opcodes are numbered in table order with no gaps; `OPCODES` in `bytecode.py` is authoritative.
 
 **Builtin functions (`CALL_FN`), by index:**
 

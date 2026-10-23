@@ -26,14 +26,14 @@ start:
     62  STOP 0 2
     68  VOICE 9
     71  PUSH_FLOAT 1.5
-    76  PAUSE
-    77  PUSH_NONE
-    78  PAUSE
-    79  WINDOW 1 17
-    83  WINDOW 2 -
-    87  PUSH_FLOAT 0.5
-    92  PAUSE
-    93  SCENE -
-    96  RETURN
-    97  RETURN
+    80  PAUSE
+    81  PUSH_NONE
+    82  PAUSE
+    83  WINDOW 1 17
+    87  WINDOW 2 -
+    91  PUSH_FLOAT 0.5
+   100  PAUSE
+   101  SCENE -
+   104  RETURN
+   105  RETURN
 -- warnings --
