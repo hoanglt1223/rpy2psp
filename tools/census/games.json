@@ -1,0 +1,188 @@
+{
+ "note": "Census corpus. fetch_games.py clones only .rpy files plus a file listing into a scratch folder; nothing here is game data.",
+ "games": [
+  {
+   "name": "the_question",
+   "repo": "https://github.com/renpy/renpy",
+   "commit": "860f39439d18ad8d33548a90a75db5e5c74f2fa3",
+   "root": "the_question/game",
+   "era": "8 (8.5 sample)",
+   "license": "MIT (Ren'Py license; demo art under the same terms)"
+  },
+  {
+   "name": "learntocoderpg",
+   "repo": "https://github.com/freeCodeCamp/LearnToCodeRPG",
+   "commit": "9ccf18c86e962ed25b946bb2d28aa6ac8c1ae9c1",
+   "root": "game",
+   "era": "7.4 -> 8 (2021-2023)",
+   "license": "BSD-3-Clause"
+  },
+  {
+   "name": "ksre",
+   "repo": "https://github.com/fleetingheart/ksre",
+   "commit": "cb98e1170c918efe834b24473e3e4aca6c9d05e3",
+   "root": "game",
+   "era": "6-era content (Katawa Shoujo 2012), refactored for 8",
+   "license": "MPL-2.0 code; KS assets CC BY-NC-ND 3.0"
+  },
+  {
+   "name": "personal_space",
+   "repo": "https://github.com/qirien/personal-space",
+   "commit": "efa33ad35cfd990cc7c18b6d9dc26f12498254c8",
+   "root": "game",
+   "era": "6 (2012-2016, old GUI)",
+   "license": "GPL-3.0 program and text; assets mixed CC"
+  },
+  {
+   "name": "personal_space2",
+   "repo": "https://github.com/qirien/personal-space2",
+   "commit": "4906ab5d61e3276ec5828a0f0ce2d13cd46152dd",
+   "root": "game",
+   "era": "6.99/7 (2016-2021)",
+   "license": "GPL-3.0 program and text; assets mixed CC/Pixabay"
+  },
+  {
+   "name": "wanted_dragon",
+   "repo": "https://github.com/qirien/wanted-dragon",
+   "commit": "2acc4b67eda9fecbae5f48e8158754a36b41f702",
+   "root": "game",
+   "era": "6 (script_version 6.18.3, 2018)",
+   "license": "CC BY-NC-SA 4.0 program and text"
+  },
+  {
+   "name": "chemistry_hero",
+   "repo": "https://github.com/qirien/chemistry-hero",
+   "commit": "aae198ee6ce2e3d54a7588d6926c768b736c6b19",
+   "root": "game",
+   "era": "6 (2015)",
+   "license": "GPL-3.0"
+  },
+  {
+   "name": "enkindle",
+   "repo": "https://github.com/qirien/enkindle",
+   "commit": "2d66b7e8b8b86cc0ed2a8a730c86e16ea24413f2",
+   "root": "game",
+   "era": "8 (2023)",
+   "license": "GPL-3.0"
+  },
+  {
+   "name": "unsupervised",
+   "repo": "https://github.com/qirien/unsupervised",
+   "commit": "a8d89d215b732c211e762b5926f887c6ca97450f",
+   "root": "game",
+   "era": "8 (2024)",
+   "license": "GPL-3.0"
+  },
+  {
+   "name": "wonder",
+   "repo": "https://github.com/qirien/Wonder",
+   "commit": "7261111debcdbbf86e662966696e98e8e8216eb7",
+   "root": "game",
+   "era": "8 (2023)",
+   "license": "GPL-3.0"
+  },
+  {
+   "name": "rms_dating_sim",
+   "repo": "https://github.com/DeadSuperHero/rms-dating-simulator",
+   "commit": "1d107076219adfd733a599865aeb0e2e245db399",
+   "root": "game",
+   "era": "6.99 (2017, new GUI)",
+   "license": "GPL-3.0"
+  },
+  {
+   "name": "arcance",
+   "repo": "https://github.com/nsobczak/Arcance",
+   "commit": "ed0885e132b5af40b074e5c4bb4273eaf8d494be",
+   "root": "game",
+   "era": "6.99 (2017-2018)",
+   "license": "Apache-2.0"
+  },
+  {
+   "name": "zero_echoes",
+   "repo": "https://github.com/Trcmoe/Zero-Echoes",
+   "commit": "9bf4ec452e6303f347c1eb374f3cad0eef8f9663",
+   "root": "game",
+   "era": "8 (8.3.3, 2024)",
+   "license": "CC-BY-4.0"
+  },
+  {
+   "name": "marystory",
+   "repo": "https://github.com/MaxGog/marystory",
+   "commit": "93c4dde50f8256e1f566ddafc894c202eee81b97",
+   "root": "game",
+   "era": "8 (2023-2025)",
+   "license": "Apache-2.0"
+  },
+  {
+   "name": "cross_channel",
+   "repo": "https://github.com/MewX/cross-channel_chinese-localization_project",
+   "commit": "814fea07f2cf3a7d158f1ce19d07c48dc8e5effb",
+   "root": "AllPlatforms",
+   "era": "6-era port (2015), maintained on 8.5",
+   "license": "Apache-2.0 port code; story text and art belong to the commercial original (census only)"
+  },
+  {
+   "name": "jam_kirei",
+   "repo": "https://github.com/Wavedash/Kirei-Git",
+   "commit": "439528c1925a9223cec1b03fbce2034fc90b607c",
+   "root": "Kirei/game",
+   "era": "6 (NaNoRenO 2014)",
+   "license": "none stated (census only)",
+   "supplementary": true
+  },
+  {
+   "name": "jam_cat_adventure",
+   "repo": "https://github.com/tilden/CatAdventure",
+   "commit": "c2dc36af6f05de933fa4b0b07e39c8c7bb4ad910",
+   "root": "game",
+   "era": "6 (NaNoRenO 2016)",
+   "license": "none stated (census only)",
+   "supplementary": true
+  },
+  {
+   "name": "jam_our_home",
+   "repo": "https://github.com/WatercressStudios/Our-Home.",
+   "commit": "7d937534e26e464808711d562d5287ac7f386864",
+   "root": "game",
+   "era": "6.99 (NaNoRenO 2017)",
+   "license": "none stated (census only)",
+   "supplementary": true
+  },
+  {
+   "name": "jam_somnova",
+   "repo": "https://github.com/MoGloom/somnova-nanoreno-2018",
+   "commit": "2ad6addeab0876037c047d01bbdb32503c8095da",
+   "root": "game",
+   "era": "6.99/7 (NaNoRenO 2018)",
+   "license": "CC BY-NC-SA 4.0",
+   "supplementary": true
+  },
+  {
+   "name": "jam_sidetracked",
+   "repo": "https://github.com/hsandt/nanoreno2020-sidetracked",
+   "commit": "13c244aa41ce36457c1d240a24551193c7d11fac",
+   "root": "game",
+   "era": "7 (NaNoRenO 2020)",
+   "license": "MIT",
+   "supplementary": true
+  },
+  {
+   "name": "jam_nano2020",
+   "repo": "https://github.com/nikoniconii/nano2020",
+   "commit": "c7c22c2522389af496b01258a1930d2264107fc7",
+   "root": "",
+   "era": "7 (NaNoRenO 2020)",
+   "license": "none stated (census only)",
+   "supplementary": true
+  },
+  {
+   "name": "jam_malviolence",
+   "repo": "https://github.com/kigyo/malViolence",
+   "commit": "d3d4054176a8f48df13ecdb61a1b79224719c337",
+   "root": "game",
+   "era": "8 (NaNoRenO 2023)",
+   "license": "none stated (census only)",
+   "supplementary": true
+  }
+ ]
+}

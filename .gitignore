@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Census corpus and outputs live outside the repo (default %TEMP%/rpy2psp-census).
+# These patterns catch accidental copies.
+census-out/
+*.files.txt
+
+# Never commit game data: scripts, compiled scripts, archives, or converted assets.
+*.rpy
+*.rpyc
+*.rpym
+*.rpymc
+*.rpa
+!tests/**/*.rpy
+
+# PSP build outputs
+*.PBP
+*.elf
+*.prx
