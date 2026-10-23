@@ -13,7 +13,8 @@ python -I tools/census/census.py --manifest tools/census/games.json \
 
 ## Result
 
-**The phase 01 gate is not met.** The core subset fully covers 5 of 15 games
+**The original phase 01 gate (10 of 15) was not met. The user then narrowed the scope to
+dialogue-driven VNs (see [Compiler coverage](#compiler-coverage-phase-02)).** The core subset fully covers 5 of 15 games
 (the_question, wanted_dragon, chemistry_hero, arcance, zero_echoes), not 10. Adding static
 custom screens and the missing effects brings it to 7 of 15. The other 8 games need
 Python functions and classes plus custom screens that run Python. That means a Python
@@ -38,6 +39,32 @@ step (ksre, personal_space, personal_space2, cross_channel) are held back only b
 clauses (`label ... hide`, `scene ... onlayer`) and by speakers the standalone parser
 could not resolve (`say:who-unknown`). With a full runtime they would effectively be
 covered.
+
+## Compiler coverage (phase 02)
+
+The scope decision (2026-10-23) narrows rpy2psp to dialogue-driven VNs. The gate is now:
+the three target games compile fully, and coverage of this corpus is reported. The phase 02
+compiler measures coverage directly. A game counts as covered when `rpy2psp compile` reports
+zero errors. Asset files that a sparse census checkout omits are known from the file listing,
+so they are not counted as missing.
+
+```sh
+python -m rpy2psp coverage --manifest tools/census/games.json --games-dir "%TEMP%/rpy2psp-census/games"
+```
+
+| Game | Errors | Main reasons |
+|---|---|---|
+| the_question, arcance, zero_echoes (targets) | 0 | - |
+| wanted_dragon, chemistry_hero | 0 | - |
+| rms_dating_sim | 5 | static custom screen `countdown` (timed menu) |
+| wonder | 6 | Python functions, `renpy.curry`, custom bestiary screen |
+| marystory | 20 | `Movie` sprites, `irisout`, custom choice screen; 15 audio files absent from the repo |
+| enkindle, unsupervised | 34, 48 | Python functions, imports, and custom screens |
+| learntocoderpg, personal_space, personal_space2, ksre, cross_channel | 1,300 to 33,898 | Python classes and functions, custom screens, transitions held in variables; characters created in Python cascade into `say:who-unknown` |
+
+**Result: 5 of 15 compile with zero errors.** These are the same five games the census
+predicted. The three targets are among them. Earlier sections of this page describe the
+original 10-of-15 gate and the reasoning behind narrowing it.
 
 ## Corpus
 

@@ -1,0 +1,27 @@
+__init__:
+     0  RETURN
+__defaults__:
+     1  PUSH_STR 'Pat'
+     6  STORE_DEFAULT player_name
+     9  RETURN
+start:
+    10  SAY 0 'Narration with {b}bold{/b} and an escaped {{brace} and [[bracket].' - 1
+    20  SAY 5 'Hello, [player_name]!' - 1
+    30  SAY_ATTRS 5 0 ['happy']
+    39  SAY 5 'Showing a new expression.' - 1
+    49  SAY_ATTRS 5 1 ['sad']
+    58  SAY 5 'Temporary attributes.' - 1
+    68  SAY 8 'A who-string speaker.' - 1
+    78  SAY 1 'Centered text.' - 1
+    88  SAY 5 'First part...' - 1
+    98  SAY 3 ' and the rest.' - 1
+   108  SAY 6 'NVL line.' - 1
+   118  NVL 0 -
+   122  SAY 7 'Dynamic name.' - 1
+   132  SAY 5 'With a transition.' 17 1
+   142  SAY 5 'Not interacting.' - 0
+   152  SAY 0 'Monologue one.' - 1
+   162  SAY 0 'Monologue two.' - 1
+   172  RETURN
+   173  RETURN
+-- warnings --

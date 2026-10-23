@@ -1,0 +1,39 @@
+__init__:
+     0  RETURN
+__defaults__:
+     1  RETURN
+start:
+     2  WITH -
+     5  SCENE 0
+     8  WITH 16
+    11  SHOW 1
+    14  WITH 40
+    17  SHOW 2
+    20  SHOW 3
+    23  SHOW 4
+    26  WITH -
+    29  HIDE 5
+    32  WITH 17
+    35  WITH -
+    38  SHOW 6
+    41  WITH 43
+    44  WITH 39
+    47  WITH 19
+    50  PLAY 0
+    53  PLAY 1
+    56  PLAY 2
+    59  PLAY 3
+    62  STOP 0 2
+    68  VOICE 9
+    71  PUSH_FLOAT 1.5
+    76  PAUSE
+    77  PUSH_NONE
+    78  PAUSE
+    79  WINDOW 1 17
+    83  WINDOW 2 -
+    87  PUSH_FLOAT 0.5
+    92  PAUSE
+    93  SCENE -
+    96  RETURN
+    97  RETURN
+-- warnings --

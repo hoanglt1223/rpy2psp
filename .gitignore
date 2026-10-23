@@ -20,3 +20,6 @@ census-out/
 *.PBP
 *.elf
 *.prx
+
+# Compiler outputs
+*.vnb

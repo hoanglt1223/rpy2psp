@@ -1,0 +1,17 @@
+__init__:
+     0  RETURN
+__defaults__:
+     1  RETURN
+start:
+     2  SAY 5 'Chào buổi sáng.' - 1
+    12  SAY 5 'Cà phê hay trà?' - 0
+    22  PUSH_TRUE
+    23  PUSH_TRUE
+    24  MENU ['Cà phê'->@42, 'Trà'->@57]
+    42  SAY 0 'You chose coffee.' - 1
+    52  JUMP @72
+    57  SAY 0 'You chose tea.' - 1
+    67  JUMP @72
+    72  RETURN
+    73  RETURN
+-- warnings --

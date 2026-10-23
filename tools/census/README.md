@@ -21,7 +21,7 @@ python -I census.py --manifest games.json --games-dir "%TEMP%/rpy2psp-census/gam
 python -I census.py path/to/game
 
 # Tests (self-authored snippets)
-python -I -m unittest test_census
+python -m unittest test_census
 ```
 
 ## Files

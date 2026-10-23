@@ -1,0 +1,100 @@
+__init__:
+     0  RETURN
+__defaults__:
+     1  PUSH_INT 0
+     6  STORE_DEFAULT score
+     9  CALL_FN set 0
+    12  STORE_DEFAULT seen
+    15  RETURN
+start:
+    16  LOAD score
+    19  PUSH_INT 2
+    24  BINARY ADD
+    26  STORE score
+    29  LOAD score
+    32  PUSH_INT 1
+    37  COMPARE GT
+    39  JUMP_IF_FALSE_OR_POP @56
+    44  LOAD score
+    47  PUSH_INT 5
+    52  COMPARE EQ
+    54  UNARY NOT
+    56  JUMP_IF_FALSE @76
+    61  SAY 0 'Big.' - 1
+    71  JUMP @121
+    76  LOAD score
+    79  PUSH_INT 1
+    84  COMPARE EQ
+    86  JUMP_IF_FALSE @106
+    91  SAY 0 'One.' - 1
+   101  JUMP @121
+   106  SAY 0 'Small.' - 1
+   116  JUMP @121
+   121  LOAD score
+   124  PUSH_INT 5
+   129  COMPARE LT
+   131  JUMP_IF_FALSE @154
+   136  LOAD score
+   139  PUSH_INT 1
+   144  BINARY ADD
+   146  STORE score
+   149  JUMP @121
+   154  PUSH_STR 'Ann'
+   159  PUSH_INT 2
+   164  CALL @324
+after_greet:
+   169  PUSH_STR 'greet'
+   174  CALL_DYNAMIC
+chooser:
+   175  SAY 0 'Pick one.' - 0
+   185  LOAD score
+   188  PUSH_INT 5
+   193  COMPARE GE
+   195  JUMP_IF_FALSE_OR_POP @210
+   200  PUSH_STR 'Red'
+   205  LOAD seen
+   208  COMPARE NOTIN
+   210  PUSH_TRUE
+   211  JUMP_IF_FALSE_OR_POP @226
+   216  PUSH_STR 'Blue'
+   221  LOAD seen
+   224  COMPARE NOTIN
+   226  MENU ['Red'->@244, 'Blue'->@274]
+   244  LOAD seen
+   247  PUSH_STR 'Red'
+   252  CALL_FN menu_set_add 2
+   255  POP
+   256  PUSH_STR 'red'
+   261  STORE color
+   264  JUMP @299<start.done>
+   269  JUMP @299<start.done>
+   274  LOAD seen
+   277  PUSH_STR 'Blue'
+   282  CALL_FN menu_set_add 2
+   285  POP
+   286  PUSH_STR 'blue'
+   291  STORE color
+   294  JUMP @299<start.done>
+start.done:
+   299  SAY 0 'Done: [color]' - 1
+   309  JUMP @354<finish>
+greet:
+   314  PUSH_STR 'you'
+   319  PUSH_INT 1
+   324  BIND times
+   327  BIND name
+   330  SAY 0 'Hi [name] x[times].' - 1
+   340  LOAD times
+   343  PUSH_INT 2
+   348  BINARY MUL
+   350  STORE _return
+   353  RETURN
+finish:
+   354  LOAD seen
+   357  CALL_FN len 1
+   360  LOAD _return
+   363  BINARY ADD
+   365  STORE total
+   368  RETURN
+   369  RETURN
+-- warnings --
