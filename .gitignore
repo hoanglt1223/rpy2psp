@@ -24,3 +24,6 @@ census-out/
 # Compiler outputs
 *.vnb
 *.pak
+
+# Build output (CMake, PSP)
+out/

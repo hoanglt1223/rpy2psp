@@ -51,7 +51,44 @@ jobs:
           Copy-Item LICENSE, README.md "$env:RUNNER_TEMP/pyi-out/rpy2psp/"
           Compress-Archive -Path "$env:RUNNER_TEMP/pyi-out/rpy2psp" -DestinationPath "rpy2psp-${{ github.ref_name }}-windows-x64.zip"
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: rpy2psp-${{ github.ref_name }}-windows-x64.zip
+
+  psp:
+    # The vnpsp engine as a PSP EBOOT, built in the same pinned image as scripts/psp-build.sh.
+    runs-on: ubuntu-latest
+    container: pspdev/pspdev:v20261001@sha256:54895e6f5afb71b8f4f6915ee6d5023e1e087ca7afdf2dcb1d7a694a5233e45f
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build EBOOT.PBP
+        run: bash scripts/psp-build.sh Release
+
+      - name: Zip
+        run: |
+          mkdir -p vnpsp
+          cp out/psp/vnpsp/EBOOT.PBP LICENSE README.md vnpsp/
+          cmake -E tar cf "vnpsp-${{ github.ref_name }}-psp.zip" --format=zip vnpsp
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: psp
+          path: vnpsp-${{ github.ref_name }}-psp.zip
+
+  publish:
+    needs: [windows, psp]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ github.ref_name }}" "rpy2psp-${{ github.ref_name }}-windows-x64.zip" --title "${{ github.ref_name }}" --generate-notes
+        run: >
+          gh release create "${{ github.ref_name }}" --repo "${{ github.repository }}"
+          "rpy2psp-${{ github.ref_name }}-windows-x64.zip" "vnpsp-${{ github.ref_name }}-psp.zip"
+          --title "${{ github.ref_name }}" --generate-notes
