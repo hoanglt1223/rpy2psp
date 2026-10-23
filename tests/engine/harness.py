@@ -93,7 +93,8 @@ def run_driver(game_dir, script, save_dir=None, extra=(), timeout=600):
         if not os.path.isfile(tp):
             raise AssertionError(f"vnpsp wrote no trace (exit code {proc.returncode}): "
                                  f"{proc.stderr.decode('utf-8', 'replace')[-2000:]}")
-        with open(tp, encoding="utf-8") as f:
+        # Corrupt inputs can put invalid UTF-8 into the trace.
+        with open(tp, encoding="utf-8", errors="replace") as f:
             lines = f.read().splitlines()
         return proc.returncode, lines
     finally:

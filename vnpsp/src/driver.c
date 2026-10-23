@@ -433,15 +433,24 @@ int driver_main(const char *game, const char *save_dir, const char *script_path,
         fprintf(stderr, "vnpsp: cannot write %s\n", trace_path);
         return 2;
     }
-    if (o->wav_path) {
-        d.wav = fopen(o->wav_path, "wb");
-        if (d.wav) fseek(d.wav, 44, SEEK_SET);
-    }
     void *script;
     size_t size;
     if (!vn_fs_read_all(script_path, &script, &size)) {
         fprintf(stderr, "vnpsp: cannot read %s\n", script_path);
+        fprintf(d.trace, "fail\tcannot read the command script\nresult\tfail\n");
+        if (d.trace != stdout) fclose(d.trace);
         return 2;
+    }
+    if (o->wav_path) {
+        d.wav = fopen(o->wav_path, "wb");
+        if (!d.wav) {
+            fprintf(stderr, "vnpsp: cannot write %s\n", o->wav_path);
+            fprintf(d.trace, "fail\tcannot write the WAV file\nresult\tfail\n");
+            if (d.trace != stdout) fclose(d.trace);
+            free(script);
+            return 2;
+        }
+        fseek(d.wav, 44, SEEK_SET);
     }
     gfx_init();
     vn_config cfg = {game, save_dir, true, o->texture_budget, trace_line, &d};
@@ -449,7 +458,9 @@ int driver_main(const char *game, const char *save_dir, const char *script_path,
     d.e = vn_engine_new(&cfg, err, sizeof err);
     if (!d.e) {
         fprintf(stderr, "vnpsp: %s\n", err);
-        fprintf(d.trace, "fail\t%s\n", err);
+        fprintf(d.trace, "fail\t%s\nresult\tfail\n", err);
+        if (d.trace != stdout) fclose(d.trace);
+        if (d.wav) fclose(d.wav);
         free(script);
         return 1;
     }

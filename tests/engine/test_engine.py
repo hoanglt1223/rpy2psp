@@ -209,6 +209,32 @@ class StateTest(unittest.TestCase):
         self.assertEqual(notes[-1], "renpy.notify\t['Saved runs: 2']")
 
 
+class CorruptFilesTest(unittest.TestCase):
+    def test_corrupt_script_and_pack_never_crash(self):
+        """Truncated or bit-flipped files end in a clean error or a normal run, never a crash."""
+        rng = random.Random(7)
+        script = play_script(finished_paths()[0])
+        for target in ("script.vnb", "data.pak"):
+            with open(os.path.join(GAME, target), "rb") as f:
+                data = f.read()
+            for i in range(15):
+                game = os.path.join(TMP, "corrupt")
+                shutil.rmtree(game, True)
+                shutil.copytree(GAME, game)
+                b = bytearray(data)
+                if i % 3 == 0:
+                    b = b[:rng.randrange(len(b))]
+                else:
+                    for _ in range(rng.choice([1, 4, 16])):
+                        b[rng.randrange(len(b))] = rng.randrange(256)
+                with open(os.path.join(game, target), "wb") as f:
+                    f.write(bytes(b))
+                rc, lines = run_driver(game, script, extra=["--fast", "--max-frames", "20000"])
+                with self.subTest(target=target, case=i):
+                    self.assertIn(rc, (0, 1))
+                    self.assertTrue(lines[-1].startswith("result\t"))
+
+
 class AudioTest(unittest.TestCase):
     def test_music_loops_without_a_gap(self):
         # Start, then idle on the first line long enough for the 2 s track to loop twice.
