@@ -591,7 +591,7 @@ static void host(vn_engine *e)
     vm_ops o;
     vn_buf t1 = {0}, t2 = {0};
     if (!vm_decode(v, &o)) {
-        eng_fail(e, "bad instruction at %u", v->pc);
+        eng_fail(e, "bad instruction at %u", (unsigned)v->pc);
         return;
     }
     switch (o.op) {
@@ -600,7 +600,7 @@ static void host(vn_engine *e)
         uint16_t tr = (uint16_t)(o.op == OP_SAY ? o.u[2] : o.u[1]);
         bool interact = ((o.op == OP_SAY ? o.u[3] : o.u[2]) & 1) != 0;
         if (ci >= s->nchars || (o.op == OP_SAY && o.u[1] >= s->nstrings)) {
-            eng_fail(e, "bad say at %u", v->pc);
+            eng_fail(e, "bad say at %u", (unsigned)v->pc);
             break;
         }
         if (tr != VN_NONE16 && tr < s->ntrans && interact && !e->say_trans_done && !e->skip) {
@@ -638,7 +638,7 @@ static void host(vn_engine *e)
     case OP_SAY_ATTRS: {
         uint16_t ci = (uint16_t)o.u[0];
         if (ci >= s->nchars) {
-            eng_fail(e, "bad say attributes at %u", v->pc);
+            eng_fail(e, "bad say attributes at %u", (unsigned)v->pc);
             break;
         }
         if (s->chars[ci].flags & CHAR_EXTEND) ci = e->st.last_speaker;
@@ -668,7 +668,7 @@ static void host(vn_engine *e)
     }
     case OP_MENU: {
         if (v->sp < o.count) {
-            eng_fail(e, "stack underflow at menu %u", v->pc);
+            eng_fail(e, "stack underflow at menu %u", (unsigned)v->pc);
             break;
         }
         int visible = 0;
@@ -687,7 +687,7 @@ static void host(vn_engine *e)
             if (!conds[i]) continue;
             uint32_t sid = vn_le32(o.list + 8 * i), addr = vn_le32(o.list + 8 * i + 4);
             if (addr >= s->code_size || e->nitems >= MENU_MAX) {
-                eng_fail(e, "bad menu at %u", v->pc);
+                eng_fail(e, "bad menu at %u", (unsigned)v->pc);
                 failed = true;
                 break;
             }
@@ -714,7 +714,7 @@ static void host(vn_engine *e)
     }
     case OP_PAUSE: {
         if (v->sp < 1) {
-            eng_fail(e, "stack underflow at pause %u", v->pc);
+            eng_fail(e, "stack underflow at pause %u", (unsigned)v->pc);
             break;
         }
         value d = vm_peek(v, 0);
@@ -756,7 +756,7 @@ static void host(vn_engine *e)
     case OP_SHOW: case OP_SCENE: case OP_HIDE: case OP_SHOW_DYNAMIC: {
         uint16_t ri = (uint16_t)o.u[0];
         if (ri != VN_NONE16 && ri >= s->nshows) {
-            eng_fail(e, "bad show record at %u", v->pc);
+            eng_fail(e, "bad show record at %u", (unsigned)v->pc);
             break;
         }
         const vn_show *rec = ri == VN_NONE16 ? NULL : &s->shows[ri];
@@ -789,7 +789,7 @@ static void host(vn_engine *e)
     case OP_PLAY: {
         uint16_t ai = (uint16_t)o.u[0];
         if (ai >= s->naudio) {
-            eng_fail(e, "bad play record at %u", v->pc);
+            eng_fail(e, "bad play record at %u", (unsigned)v->pc);
             break;
         }
         eng_trace(e, "play\t%u", ai);
@@ -826,7 +826,7 @@ static void host(vn_engine *e)
         finish_host(e, &o);
         break;
     case OP_WINDOW: case OP_NVL: {
-        eng_trace(e, "%s\t%u\t%u", o.op == OP_WINDOW ? "window" : "nvl", o.u[0], o.u[1]);
+        eng_trace(e, "%s\t%u\t%u", o.op == OP_WINDOW ? "window" : "nvl", (unsigned)o.u[0], (unsigned)o.u[1]);
         if (o.op == OP_WINDOW) {
             e->st.window = o.u[0] == 0 ? WINDOW_SHOW : o.u[0] == 1 ? WINDOW_HIDE : WINDOW_AUTO;
         } else if (o.u[0] == 0) {
@@ -840,7 +840,7 @@ static void host(vn_engine *e)
         break;
     }
     case OP_MOVIE:
-        eng_trace(e, "movie\t%u", o.u[0]);
+        eng_trace(e, "movie\t%u", (unsigned)o.u[0]);
         if (!e->warned_movie) vn_log("vnpsp: movie cutscenes are not supported yet; skipping");
         e->warned_movie = true;
         finish_host(e, &o);
@@ -928,7 +928,7 @@ static void host(vn_engine *e)
         break;
     }
     default:
-        eng_fail(e, "unexpected host instruction %u at %u", o.op, v->pc);
+        eng_fail(e, "unexpected host instruction %u at %u", (unsigned)o.op, (unsigned)v->pc);
         break;
     }
     vn_buf_free(&t1);
@@ -960,7 +960,7 @@ static void run_story(vn_engine *e)
                 const vn_label *l = &e->script.labels[i];
                 if (l->addr <= e->vm.pc && (!best || l->addr > best->addr)) best = l;
             }
-            eng_fail(e, "%s (at %u, in label %s)", e->vm.err.msg, e->vm.pc,
+            eng_fail(e, "%s (at %u, in label %s)", e->vm.err.msg, (unsigned)e->vm.pc,
                      best ? vn_str(&e->script, best->name) : "?");
             return;
         }

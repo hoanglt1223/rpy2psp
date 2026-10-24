@@ -40,6 +40,15 @@ out/msvc/vnpsp/Release/vnpsp.exe out/game --play script.txt --trace trace.txt   
 
 For the PSP, `scripts/psp-build.sh` builds `out/psp/vnpsp/EBOOT.PBP` in the pinned pspdev Docker image. Put `script.vnb` and `data.pak` next to `EBOOT.PBP` in `ms0:/PSP/GAME/<folder>/`. Saves go to `ms0:/PSP/SAVEDATA/<folder>/`, the folder name reduced to letters, digits, `_` and `-`.
 
+### Testing on a PSP-3000 (ARK-4)
+
+1. `sh scripts/psp-build.sh`, then `python -m rpy2psp compile <game> -o <out>` and `python -m rpy2psp pack <game> -o <out> --font-dir <fonts>`.
+2. Make `ms0:/PSP/GAME/<Folder>/` over USB and copy `out/psp/vnpsp/EBOOT.PBP`, `<out>/script.vnb` and `<out>/data.pak` into it.
+3. On the PSP: Game > Memory Stick > the game. Play through the first scenes and compare with the PC `shot` PNGs.
+4. Check: text and CJK glyphs render, a choice menu works, music loops without gaps, save then load from `ms0:/PSP/SAVEDATA/<Folder>/`, rollback, and no slowdown on scene changes.
+5. For crash logs, build a PRX (`PSP_CMAKE_ARGS=-DBUILD_PRX=ON sh scripts/psp-build.sh`) and run it through psplink (`usbhostfs_pc` + `pspsh`) from `host0:` in a folder that also holds `script.vnb` and `data.pak`; exceptions print in `pspsh`.
+6. Report the first scene that looks wrong or the crash text.
+
 ### Headless driver
 
 `--play` runs a command script and presses buttons the way a player would. The trace has one line per story event (`say`, `menu`, `show`, `play`, and the others; the formats match `tests/engine/harness.py`), the shown text, and the results of the `hash`, `state`, `shot` and `save` commands. The command list is at the top of `vnpsp/src/driver.c`.

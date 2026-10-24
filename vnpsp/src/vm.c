@@ -333,7 +333,7 @@ bool vm_run_routine(vm *v, uint32_t addr)
     v->routine = true;
     vm_status st = vm_run(v);
     bool ok = st == VM_DONE;
-    if (st == VM_HOST) vm_error(v, "instruction %u at %u is not allowed in an init routine", v->s->code[v->pc], v->pc);
+    if (st == VM_HOST) vm_error(v, "instruction %u at %u is not allowed in an init routine", (unsigned)v->s->code[v->pc], (unsigned)v->pc);
     while (v->nframes > base_frames) {
         vm_frame *f = &v->frames[--v->nframes];
         for (uint32_t k = 0; k < f->nsaved; k++) v_dec(f->saved[k].old);
@@ -347,7 +347,7 @@ bool vm_run_routine(vm *v, uint32_t addr)
 #define NEED(n)                                                                  \
     do {                                                                         \
         if (v->sp < (uint32_t)(n)) {                                             \
-            vm_error(v, "stack underflow at %u", pc);                            \
+            vm_error(v, "stack underflow at %u", (unsigned)pc);                            \
             return VM_ERROR;                                                     \
         }                                                                        \
     } while (0)
@@ -356,7 +356,7 @@ bool vm_run_routine(vm *v, uint32_t addr)
     do {                                                                         \
         uint32_t t_ = (target);                                                  \
         if (t_ >= s->code_size) {                                                \
-            vm_error(v, "jump outside code at %u", pc);                          \
+            vm_error(v, "jump outside code at %u", (unsigned)pc);                          \
             return VM_ERROR;                                                     \
         }                                                                        \
         next = t_;                                                               \
@@ -373,7 +373,7 @@ vm_status vm_run(vm *v)
         uint32_t pc = v->pc;
         vm_ops o;
         if (!vm_decode(v, &o)) {
-            vm_error(v, "bad instruction at %u", pc);
+            vm_error(v, "bad instruction at %u", (unsigned)pc);
             return VM_ERROR;
         }
         uint32_t next = pc + o.len;
@@ -387,7 +387,7 @@ vm_status vm_run(vm *v)
         case OP_PUSH_FLOAT: vm_push(v, v_float(o.d)); break;
         case OP_PUSH_STR:
             if (o.u[0] >= s->nstrings) {
-                vm_error(v, "bad string %u at %u", o.u[0], pc);
+                vm_error(v, "bad string %u at %u", (unsigned)o.u[0], (unsigned)pc);
                 return VM_ERROR;
             }
             if (v->const_strs[o.u[0]].t != V_STR)
@@ -401,7 +401,7 @@ vm_status vm_run(vm *v)
         case OP_STORE: case OP_STORE_DEFAULT:
             NEED(1);
             if (o.u[0] >= s->nsyms) {
-                vm_error(v, "bad symbol at %u", pc);
+                vm_error(v, "bad symbol at %u", (unsigned)pc);
                 return VM_ERROR;
             }
             a = vm_pop(v);
@@ -540,7 +540,7 @@ vm_status vm_run(vm *v)
         case OP_CALL_FN: {
             uint8_t fn = (uint8_t)o.u[0], argc = (uint8_t)o.u[1];
             if (fn >= FN_COUNT || argc < fn_arity[fn].lo || argc > fn_arity[fn].hi) {
-                vm_error(v, "bad builtin call %u/%u at %u", fn, argc, pc);
+                vm_error(v, "bad builtin call %u/%u at %u", (unsigned)fn, (unsigned)argc, (unsigned)pc);
                 return VM_ERROR;
             }
             NEED(argc);
@@ -574,7 +574,7 @@ vm_status vm_run(vm *v)
         }
         case OP_CALL:
             if (o.u[0] >= s->code_size) {
-                vm_error(v, "call outside code at %u", pc);
+                vm_error(v, "call outside code at %u", (unsigned)pc);
                 return VM_ERROR;
             }
             if (!push_frame(v, next)) return VM_ERROR;
@@ -604,7 +604,7 @@ vm_status vm_run(vm *v)
         case OP_BIND:
             NEED(1);
             if (o.u[0] >= s->nsyms) {
-                vm_error(v, "bad symbol at %u", pc);
+                vm_error(v, "bad symbol at %u", (unsigned)pc);
                 return VM_ERROR;
             }
             if (v->nframes) frame_remember(&v->frames[v->nframes - 1], (uint16_t)o.u[0], v->vars[o.u[0]]);
@@ -612,7 +612,7 @@ vm_status vm_run(vm *v)
             break;
         default:
             if (o.op >= OP_SAY && o.op < OP_COUNT) return VM_HOST;
-            vm_error(v, "unknown opcode %u at %u", o.op, pc);
+            vm_error(v, "unknown opcode %u at %u", (unsigned)o.op, (unsigned)pc);
             return VM_ERROR;
         }
         if (o.op == OP_JUMP || ((o.op == OP_JUMP_IF_FALSE || o.op == OP_JUMP_IF_TRUE) && next != pc + o.len))

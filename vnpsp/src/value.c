@@ -688,7 +688,7 @@ static void str_repr(vstr *s, vn_buf *b)
         } else if (cp == '\t') {
             vn_buf_put(b, "\\t", 2);
         } else if (cp < 0x20 || cp == 0x7F || (cp >= 0x80 && cp < 0xA0)) {
-            int n = snprintf(esc, sizeof esc, "\\x%02x", cp);
+            int n = snprintf(esc, sizeof esc, "\\x%02x", (unsigned)cp);
             vn_buf_put(b, esc, (size_t)n);
         } else {
             vn_buf_put(b, s->data + start, pos - start);
@@ -1565,7 +1565,7 @@ bool v_call_method(int m, value obj, value *args, int argc, value *out, verr *e)
             vn_buf buf = {0};
             for (uint32_t i = 0; i < n; i++) {
                 if (items[i].t != V_STR) {
-                    verr_set(e, "TypeError: sequence item %u: expected str instance, %s found", i, v_type_name(items[i]));
+                    verr_set(e, "TypeError: sequence item %u: expected str instance, %s found", (unsigned)i, v_type_name(items[i]));
                     free_items(items, n);
                     vn_buf_free(&buf);
                     return false;

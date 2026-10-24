@@ -444,7 +444,7 @@ bool vn_assets_open(vn_assets *a, const char *path, const vn_script *s, size_t b
         a->asset_entry[i] = find_entry(a, vn_str(s, s->assets[i].key));
         if (a->asset_entry[i] < 0) missing++;
     }
-    if (missing) vn_log("assets: %u assets named by the script are missing from the pack", missing);
+    if (missing) vn_log("assets: %u assets named by the script are missing from the pack", (unsigned)missing);
     a->label_scene = vn_calloc(s->nlabels + 1, sizeof(int32_t));
     for (uint32_t i = 0; i < s->nlabels; i++) {
         a->label_scene[i] = -1;
