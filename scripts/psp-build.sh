@@ -5,6 +5,8 @@
 #   scripts/psp-build.sh [Release|Debug]     output: out/psp/vnpsp/EBOOT.PBP
 #
 # Extra CMake arguments go in PSP_CMAKE_ARGS, e.g. PSP_CMAKE_ARGS=-DBUILD_PRX=ON for psplink.
+# `sh scripts/psp-build.sh` works too: re-run under bash when started by another shell (dash).
+if [ -z "${BASH_VERSION:-}" ]; then exec bash "$0" "$@"; fi
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -19,7 +21,10 @@ if [ -z "${PSPDEV:-}" ]; then
     image="vnpsp-psp-build:local"
     docker build -t "$image" -f "$root/docker/psp-build.Dockerfile" "$root/docker"
     # MSYS_NO_PATHCONV keeps Git Bash on Windows from rewriting the container paths.
-    MSYS_NO_PATHCONV=1 docker run --rm \
+    # On Linux, run as the calling user so out/psp is not owned by root.
+    user_args=()
+    if [ "$(uname -s)" = Linux ]; then user_args=(--user "$(id -u):$(id -g)" -e HOME=/tmp); fi
+    MSYS_NO_PATHCONV=1 docker run --rm "${user_args[@]}" \
         -v "$root:/src" -w /src \
         -e PSP_CMAKE_ARGS="${PSP_CMAKE_ARGS:-}" \
         "$image" bash scripts/psp-build.sh "$config"
