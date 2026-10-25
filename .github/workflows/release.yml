@@ -7,57 +7,16 @@ on:
 permissions:
   contents: write
 
+env:
+  PYINSTALLER_ARGS: >-
+    --noconfirm --onedir --name rpy2psp
+    --collect-all soundfile --collect-all etcpak --collect-all archspec
+    --collect-binaries lameenc --collect-binaries soxr
+
 jobs:
-  windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install pinned dependencies
-        run: |
-          python -m pip install -r requirements.txt
-          python -m pip install pyinstaller==6.22.3 pyinstaller-hooks-contrib==2026.9
-
-      - name: Tests
-        run: python -m unittest discover -s tests -t .
-
-      - name: Package (PyInstaller, one folder)
-        run: >
-          python -m PyInstaller --noconfirm --onedir --name rpy2psp
-          --workpath "$env:RUNNER_TEMP/pyi-work" --distpath "$env:RUNNER_TEMP/pyi-out"
-          --collect-all soundfile --collect-all etcpak --collect-data archspec
-          --collect-binaries lameenc --collect-binaries soxr
-          packaging/rpy2psp_entry.py
-
-      - name: Smoke test the executable
-        shell: pwsh
-        run: |
-          $exe = "$env:RUNNER_TEMP/pyi-out/rpy2psp/rpy2psp.exe"
-          & $exe --help
-          if ($LASTEXITCODE -ne 0) { exit 1 }
-          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP/smoke/game" | Out-Null
-          Copy-Item tests/compiler/cases/control_flow.rpy "$env:RUNNER_TEMP/smoke/game/script.rpy"
-          & $exe compile "$env:RUNNER_TEMP/smoke" -o "$env:RUNNER_TEMP/smoke-out"
-          if ($LASTEXITCODE -ne 0) { exit 1 }
-          & $exe disasm "$env:RUNNER_TEMP/smoke-out/script.vnb" | Select-Object -First 5
-
-      - name: Zip
-        shell: pwsh
-        run: |
-          Copy-Item LICENSE, README.md "$env:RUNNER_TEMP/pyi-out/rpy2psp/"
-          Compress-Archive -Path "$env:RUNNER_TEMP/pyi-out/rpy2psp" -DestinationPath "rpy2psp-${{ github.ref_name }}-windows-x64.zip"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: windows
-          path: rpy2psp-${{ github.ref_name }}-windows-x64.zip
-
   psp:
     # The vnpsp engine as a PSP EBOOT, built in the same pinned image as scripts/psp-build.sh.
+    # The converter packages below carry it too, so `rpy2psp build` works offline.
     runs-on: ubuntu-latest
     container: pspdev/pspdev:v20261001@sha256:54895e6f5afb71b8f4f6915ee6d5023e1e087ca7afdf2dcb1d7a694a5233e45f
     steps:
@@ -77,8 +36,117 @@ jobs:
           name: psp
           path: vnpsp-${{ github.ref_name }}-psp.zip
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: engine
+          path: out/psp/vnpsp/EBOOT.PBP
+
+  windows:
+    needs: psp
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install pyinstaller==6.22.3 pyinstaller-hooks-contrib==2026.9
+
+      - name: Tests
+        run: python -m unittest discover -s tests -t .
+
+      - name: Package (PyInstaller, one folder)
+        shell: bash
+        run: >
+          python -m PyInstaller $PYINSTALLER_ARGS
+          --workpath "$RUNNER_TEMP/pyi-work" --distpath "$RUNNER_TEMP/pyi-out"
+          packaging/rpy2psp_entry.py
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: engine
+          path: ${{ runner.temp }}/pyi-out/rpy2psp/vnpsp
+
+      - name: Smoke test the executable
+        shell: pwsh
+        run: |
+          $exe = "$env:RUNNER_TEMP/pyi-out/rpy2psp/rpy2psp.exe"
+          & $exe --help
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP/smoke/game" | Out-Null
+          Copy-Item tests/compiler/cases/control_flow.rpy "$env:RUNNER_TEMP/smoke/game/script.rpy"
+          Copy-Item C:/Windows/Fonts/arial.ttf "$env:RUNNER_TEMP/smoke/game/DejaVuSans.ttf"
+          & $exe build "$env:RUNNER_TEMP/smoke" -o "$env:RUNNER_TEMP/smoke-out/Smoke"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          foreach ($f in "EBOOT.PBP", "script.vnb", "data.pak") {
+            if (-not (Test-Path "$env:RUNNER_TEMP/smoke-out/Smoke/$f")) { Write-Error "missing $f"; exit 1 }
+          }
+
+      - name: Zip
+        shell: pwsh
+        run: |
+          Copy-Item LICENSE, README.md "$env:RUNNER_TEMP/pyi-out/rpy2psp/"
+          Compress-Archive -Path "$env:RUNNER_TEMP/pyi-out/rpy2psp" -DestinationPath "rpy2psp-${{ github.ref_name }}-windows-x64.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: rpy2psp-${{ github.ref_name }}-windows-x64.zip
+
+  linux:
+    needs: psp
+    runs-on: ubuntu-22.04   # oldest supported glibc, so the package runs on newer distributions too
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install pyinstaller==6.22.3 pyinstaller-hooks-contrib==2026.9
+
+      - name: Tests
+        run: python -m unittest discover -s tests -t .
+
+      - name: Package (PyInstaller, one folder)
+        run: >
+          python -m PyInstaller $PYINSTALLER_ARGS
+          --workpath "$RUNNER_TEMP/pyi-work" --distpath "$RUNNER_TEMP/pyi-out"
+          packaging/rpy2psp_entry.py
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: engine
+          path: ${{ runner.temp }}/pyi-out/rpy2psp/vnpsp
+
+      - name: Smoke test the executable
+        run: |
+          exe="$RUNNER_TEMP/pyi-out/rpy2psp/rpy2psp"
+          "$exe" --help
+          mkdir -p "$RUNNER_TEMP/smoke/game"
+          cp tests/compiler/cases/control_flow.rpy "$RUNNER_TEMP/smoke/game/script.rpy"
+          "$exe" build "$RUNNER_TEMP/smoke" -o "$RUNNER_TEMP/smoke-out/Smoke" --font-dir /usr/share/fonts/truetype/dejavu
+          for f in EBOOT.PBP script.vnb data.pak; do test -s "$RUNNER_TEMP/smoke-out/Smoke/$f"; done
+
+      - name: Archive
+        run: |
+          cp LICENSE README.md "$RUNNER_TEMP/pyi-out/rpy2psp/"
+          tar -C "$RUNNER_TEMP/pyi-out" -czf "rpy2psp-${{ github.ref_name }}-linux-x64.tar.gz" rpy2psp
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: rpy2psp-${{ github.ref_name }}-linux-x64.tar.gz
+
   publish:
-    needs: [windows, psp]
+    needs: [windows, linux, psp]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4
@@ -90,5 +158,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: >
           gh release create "${{ github.ref_name }}" --repo "${{ github.repository }}"
-          "rpy2psp-${{ github.ref_name }}-windows-x64.zip" "vnpsp-${{ github.ref_name }}-psp.zip"
+          "rpy2psp-${{ github.ref_name }}-windows-x64.zip" "rpy2psp-${{ github.ref_name }}-linux-x64.tar.gz"
+          "vnpsp-${{ github.ref_name }}-psp.zip"
           --title "${{ github.ref_name }}" --generate-notes
