@@ -453,7 +453,7 @@ int driver_main(const char *game, const char *save_dir, const char *script_path,
         fseek(d.wav, 44, SEEK_SET);
     }
     gfx_init();
-    vn_config cfg = {game, save_dir, true, o->texture_budget, trace_line, &d};
+    vn_config cfg = {game, save_dir, true, o->texture_budget, trace_line, &d, NULL};
     char err[256];
     d.e = vn_engine_new(&cfg, err, sizeof err);
     if (!d.e) {

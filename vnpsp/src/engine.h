@@ -29,6 +29,8 @@ typedef struct vn_config {
     size_t texture_budget;     /* bytes of decoded images kept in RAM */
     void (*trace)(void *user, const char *line);
     void *trace_user;
+    /* Microsecond clock; when set, start-up and scene load times are logged. */
+    uint64_t (*clock_us)(void);
 } vn_config;
 
 typedef enum vn_mode {

@@ -194,9 +194,15 @@ void eng_to_main_menu(vn_engine *e)
 /* Loads a scene's images when the story enters its label, and reports the bytes read. */
 static void prefetch(vn_engine *e, uint32_t addr)
 {
+    uint64_t t0 = e->cfg.clock_us ? e->cfg.clock_us() : 0;
     uint64_t bytes = vn_assets_prefetch_label(&e->assets, addr);
     const char *label = vn_script_label_at(&e->script, addr);
-    if (bytes && label) eng_trace(e, "prefetch\t%s\t%llu", label, (unsigned long long)bytes);
+    if (bytes && label) {
+        eng_trace(e, "prefetch\t%s\t%llu", label, (unsigned long long)bytes);
+        if (e->cfg.clock_us)
+            vn_log("vnpsp: scene %s: %llu bytes in %llu ms", label, (unsigned long long)bytes,
+                   (unsigned long long)((e->cfg.clock_us() - t0) / 1000));
+    }
 }
 
 void eng_new_game(vn_engine *e)
@@ -1290,6 +1296,7 @@ void vn_engine_render(vn_engine *e)
 
 vn_engine *vn_engine_new(const vn_config *cfg, char *err, size_t errcap)
 {
+    uint64_t t0 = cfg->clock_us ? cfg->clock_us() : 0;
     vn_engine *e = vn_calloc(1, sizeof *e);
     e->cfg = *cfg;
     e->data_dir = vn_strdup(cfg->data_dir);
@@ -1350,6 +1357,9 @@ vn_engine *vn_engine_new(const vn_config *cfg, char *err, size_t errcap)
     }
     persistent_load(e);
     e->mode = MODE_MAIN_MENU;
+    if (cfg->clock_us)
+        vn_log("vnpsp: started in %llu ms (script %u bytes)", (unsigned long long)((cfg->clock_us() - t0) / 1000),
+               (unsigned)size);
     return e;
 }
 

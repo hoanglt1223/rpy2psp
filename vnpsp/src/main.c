@@ -28,9 +28,39 @@ PSP_HEAP_SIZE_KB(-1024);
 #include <SDL3/SDL_opengl.h>
 #endif
 
+/* Audio thread cost, read by the main loop for the periodic performance log. A torn
+ * read only skews one log line. */
+static volatile uint32_t audio_busy_us, audio_frames_done;
+
 static void audio_cb(int16_t *out, int frames, void *user)
 {
+    uint64_t t0 = plat_time_us();
     mixer_render(user, out, frames);
+    audio_busy_us += (uint32_t)(plat_time_us() - t0);
+    audio_frames_done += (uint32_t)frames;
+}
+
+/* Every 5 s: frame CPU time and the share of real time the mixer (MP3 decoding
+ * included) needs. */
+typedef struct perf_log {
+    uint64_t start, frame_us, frame_max;
+    uint32_t frames, audio_us0, audio_frames0;
+} perf_log;
+
+static void perf_frame(perf_log *p, uint64_t t0)
+{
+    uint64_t now = plat_time_us(), spent = now - t0;
+    if (!p->start) p->start = t0;
+    p->frame_us += spent;
+    if (spent > p->frame_max) p->frame_max = spent;
+    if (++p->frames < 300) return;
+    uint32_t a_us = audio_busy_us, a_frames = audio_frames_done;
+    uint32_t mixed = a_frames - p->audio_frames0;
+    double audio_pct = mixed ? 100.0 * (double)(a_us - p->audio_us0) / (mixed * 1e6 / 44100.0) : 0.0;
+    plat_log("vnpsp: perf: %.1f fps, frame cpu %llu us avg / %llu us max, audio mix %.1f%% of real time",
+             p->frames * 1e6 / (double)(now - p->start), (unsigned long long)(p->frame_us / p->frames),
+             (unsigned long long)p->frame_max, audio_pct);
+    *p = (perf_log){.start = now, .audio_us0 = a_us, .audio_frames0 = a_frames};
 }
 
 static void to_input(const plat_input *p, vn_input *in)
@@ -82,7 +112,7 @@ int main(void)
     gfx_init();
     char save_dir[PLAT_PATH_MAX];
     snprintf(save_dir, sizeof save_dir, "ms0:/PSP/SAVEDATA/%s", app_id);
-    vn_config cfg = {"", save_dir, false, 12u << 20, NULL, NULL};
+    vn_config cfg = {"", save_dir, false, 12u << 20, NULL, NULL, plat_time_us};
     char err[256];
     vn_engine *e = vn_engine_new(&cfg, err, sizeof err);
     if (!e) {
@@ -94,13 +124,16 @@ int main(void)
         return 1;
     }
     if (plat_audio_start(audio_cb, vn_engine_mixer(e)) != PLAT_OK) plat_log("vnpsp: running without audio");
+    perf_log perf = {0};
     while (plat_frame_begin(0)) {
+        uint64_t t0 = plat_time_us();
         plat_input pi;
         vn_input in;
         plat_input_get(&pi);
         to_input(&pi, &in);
         vn_engine_update(e, &in, 1.0f / 60.0f);
         vn_engine_render(e);
+        perf_frame(&perf, t0);
         plat_frame_end();
         if (vn_engine_mode(e) == MODE_QUIT) break;
     }
@@ -197,7 +230,7 @@ int main(int argc, char **argv)
     }
     vn_set_log_sink(plat_sink);
     gfx_init();
-    vn_config cfg = {game, save_dir, headless, 12u << 20, NULL, NULL};
+    vn_config cfg = {game, save_dir, headless, 12u << 20, NULL, NULL, plat_time_us};
     char err[256];
     vn_engine *e = vn_engine_new(&cfg, err, sizeof err);
     if (!e) {
@@ -208,7 +241,9 @@ int main(int argc, char **argv)
     if (!no_audio && plat_audio_start(audio_cb, vn_engine_mixer(e)) != PLAT_OK) plat_log("vnpsp: running without audio");
     long n = 0;
     int rc = 0;
+    perf_log perf = {0};
     while (plat_frame_begin(0)) {
+        uint64_t t0 = plat_time_us();
         plat_input pi;
         vn_input in;
         plat_input_get(&pi);
@@ -221,6 +256,7 @@ int main(int argc, char **argv)
         vn_engine_update(e, &in, 1.0f / 60.0f);
         vn_engine_render(e);
         blit_frame();
+        perf_frame(&perf, t0);
         plat_frame_end();
         if (vn_engine_mode(e) == MODE_QUIT) break;
         if (vn_engine_mode(e) == MODE_ERROR && headless) {
