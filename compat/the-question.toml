@@ -6,6 +6,6 @@ game = "the_question"
 license = "MIT"
 languages = ["english", "japanese"]
 stage = "playable"
-evidence = "PC engine: all 3 endings identical to the reference interpreter, English and Japanese. PPSSPP (tests/psp/the-question.timeline): title, 9 lines, menu choice, save to slot 1 in ms0:/PSP/SAVEDATA/TheQuestion/, load; 15 shots at 31-51 dB PSNR against the PC engine (the two lowest differ only in the save timestamp); start-up 54 ms, first scene 207 KB in 21 ms (emulated I/O); Japanese build: title and first lines at 40-52 dB"
+evidence = "PC engine: all 3 endings identical to the reference interpreter, English and Japanese. PPSSPP (tests/psp/the-question.timeline): title, 9 lines, menu choice, save to slot 1 in ms0:/PSP/SAVEDATA/TheQuestion/, load, the rest of the 'later' ending and back to the title; 17 shots at 31-51 dB PSNR against the PC engine (the two lowest differ only in the save timestamp); start-up 54 ms, first scene 207 KB in 21 ms (emulated I/O); Japanese build: title and first lines at 40-52 dB"
 blockers = ["not yet played on a PSP-3000"]
 updated = 2026-10-25
