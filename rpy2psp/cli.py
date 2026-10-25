@@ -1,4 +1,4 @@
-"""Command line: `rpy2psp compile|disasm|coverage ...` (see README)."""
+"""Command line: `rpy2psp build|compile|pack|verify|disasm|coverage ...` (see docs/user/USAGE.md)."""
 
 import argparse
 import json
@@ -110,6 +110,50 @@ def cmd_verify(args):
     return 1 if failures else 0
 
 
+def cmd_build(args):
+    from .assets.images import AssetError
+    from .assets.pack import build_pack
+    from .build import find_engine, game_title, xmb_images
+    from .compiler.reader import load_game
+    from .eboot import EbootError, make_eboot
+    try:
+        engine_path = find_engine(args.engine)
+        with open(engine_path, "rb") as f:
+            engine = f.read()
+    except (EbootError, OSError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    comp = compile_game(args.game, args.language)
+    report(comp, sys.stderr)
+    if comp.errors:
+        print(f"{len(comp.errors)} unsupported construct(s); nothing written.", file=sys.stderr)
+        return 1
+    script = write_outputs(comp, args.out)
+    manifest = comp.manifest()
+    game = load_game(args.game)
+    try:
+        data, report_ = build_pack(game, manifest, _pack_options(args))
+        icon0, pic1, notes = xmb_images(game, comp.static, args.icon, args.background)
+        title = args.title or game_title(comp.config) or os.path.basename(os.path.abspath(args.out))
+        pbp = make_eboot(engine, title, icon0, pic1)
+    except (AssetError, EbootError, OSError) as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+    finally:
+        game.close()
+    with open(os.path.join(args.out, "data.pak"), "wb") as f:
+        f.write(data)
+    with open(os.path.join(args.out, "EBOOT.PBP"), "wb") as f:
+        f.write(pbp)
+    for n in notes:
+        print(n)
+    folder = os.path.basename(os.path.abspath(args.out))
+    print(f"wrote {args.out}: EBOOT.PBP ({len(pbp) / 1024:.0f} KiB, title {title!r}), script.vnb "
+          f"({len(script) / 1024:.0f} KiB), data.pak ({len(data) / 1048576:.2f} MiB, {report_['entries']} entries)")
+    print(f"copy the folder to ms0:/PSP/GAME/{folder}/; saves go to ms0:/PSP/SAVEDATA/{folder}/")
+    return 0
+
+
 def coverage_rows(games, games_dir):
     rows = []
     for g in games:
@@ -159,9 +203,26 @@ def cmd_coverage(args):
     return 0
 
 
+def _add_pack_args(p):
+    p.add_argument("--font-dir", action="append", help="extra folder to search for fonts (repeatable)")
+    p.add_argument("--fallback-font", help="font for characters the game font lacks")
+    p.add_argument("--font-size", type=int, default=14)
+    p.add_argument("--pcm-limit", type=float, default=1.0, help="effects up to this many seconds stay PCM")
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="rpy2psp", description="Convert Ren'Py visual novels to PSP homebrew.")
     sub = ap.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("build", help="compile, pack and make EBOOT.PBP: a folder ready for ms0:/PSP/GAME/")
+    p.add_argument("game", help="game folder (the one holding game/, or game/ itself)")
+    p.add_argument("-o", "--out", required=True, help="output folder; its name becomes the save folder on the PSP")
+    p.add_argument("--language", help="translation compiled in (tl/<language>)")
+    p.add_argument("--engine", help="vnpsp EBOOT.PBP to wrap (default: next to rpy2psp, or $RPY2PSP_ENGINE)")
+    p.add_argument("--title", help="XMB title (default: config.name)")
+    p.add_argument("--icon", help="image for ICON0 (default: config.window_icon or gui/window_icon.png)")
+    p.add_argument("--background", help="image for PIC1 (default: gui.main_menu_background)")
+    _add_pack_args(p)
+    p.set_defaults(fn=cmd_build)
     p = sub.add_parser("compile", help="compile scripts to script.vnb + manifest.json")
     p.add_argument("game", help="game folder (the one holding game/, or game/ itself)")
     p.add_argument("-o", "--out", required=True)
@@ -173,10 +234,7 @@ def main(argv=None):
         p.add_argument("game")
         p.add_argument("-o", "--out", required=True, help="folder with manifest.json (data.pak goes here)")
         p.add_argument("--manifest")
-        p.add_argument("--font-dir", action="append", help="extra folder to search for fonts (repeatable)")
-        p.add_argument("--fallback-font", help="font for characters the game font lacks")
-        p.add_argument("--font-size", type=int, default=14)
-        p.add_argument("--pcm-limit", type=float, default=1.0, help="effects up to this many seconds stay PCM")
+        _add_pack_args(p)
         p.set_defaults(fn=fn)
     p = sub.add_parser("disasm", help="print a readable listing of script.vnb")
     p.add_argument("file")
