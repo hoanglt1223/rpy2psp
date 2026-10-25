@@ -19,7 +19,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-            ninja-build clang ffmpeg libasound2-dev libpulse-dev libx11-dev libxext-dev \
+            ninja-build clang ffmpeg libasound2-dev libpulse-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxss-dev libxfixes-dev libxtst-dev libxkbcommon-dev \
             libegl1-mesa-dev libgl1-mesa-dev libgl1-mesa-dri
           python -m pip install -r requirements.txt
 
