@@ -1,0 +1,11 @@
+title = "Ren'Py Tutorial"
+kind = "homebrew"
+source = "https://github.com/renpy/renpy"
+commit = "860f39439d18ad8d33548a90a75db5e5c74f2fa3"
+game = "tutorial"
+license = "MIT"
+languages = ["english"]
+stage = "fails"
+evidence = "rpy2psp build: 457 unsupported constructs; it demonstrates Ren'Py itself (screen language, Python helpers), which is outside the dialogue-driven scope"
+blockers = ["custom 'example' statements (280) defined in Python", "custom screens shown and hidden (92)", "Python helper classes (Tutorial, 26 calls)"]
+updated = 2026-10-25

@@ -1,0 +1,11 @@
+title = "Arcance"
+kind = "homebrew"
+source = "https://github.com/nsobczak/Arcance"
+commit = "ed0885e132b5af40b074e5c4bb4273eaf8d494be"
+game = "."
+license = "Apache-2.0"
+languages = ["english"]
+stage = "playable"
+evidence = "PC engine: every 10th of 854 finished paths identical to the reference interpreter; rollback of 55 checkpoints and back. PPSSPP (tests/psp/first-lines.timeline): title and first three lines at 36-51 dB PSNR against the PC engine; first scene 348 KB in 36 ms (emulated I/O). No window icon or menu image in the game, so the EBOOT has none"
+blockers = ["PPSSPP run covers the opening only", "not yet played on a PSP-3000"]
+updated = 2026-10-25

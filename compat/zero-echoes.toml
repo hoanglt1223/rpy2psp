@@ -1,0 +1,11 @@
+title = "Zero Echoes"
+kind = "homebrew"
+source = "https://github.com/Trcmoe/Zero-Echoes"
+commit = "9bf4ec452e6303f347c1eb374f3cad0eef8f9663"
+game = "."
+license = "CC-BY-4.0"
+languages = ["chinese"]
+stage = "playable"
+evidence = "PC engine: every 4th of 164 finished paths (passwords typed on the on-screen keyboard) identical to the reference interpreter. PPSSPP (tests/psp/first-lines.timeline): title and first three Chinese lines at 41-51 dB PSNR against the PC engine; first scene 155 KB in 16 ms (emulated I/O)"
+blockers = ["PPSSPP run covers the opening only", "not yet played on a PSP-3000"]
+updated = 2026-10-25
