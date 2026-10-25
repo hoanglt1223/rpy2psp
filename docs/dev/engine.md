@@ -21,7 +21,7 @@ The core (`vncore`) does not depend on the platform layer, except through `gfx_g
 
 ## Building and running
 
-On the PC, with CMake and MSVC (SDL3 is fetched at configure time):
+On the PC, with CMake and MSVC (SDL3 is fetched at configure time; on Linux use `-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang` and `out/linux`):
 
 ```sh
 cmake -S . -B out/msvc -G "Visual Studio 17 2022" -A x64 -DPython3_EXECUTABLE=<python with requirements.txt>
@@ -38,12 +38,12 @@ out/msvc/vnpsp/Release/vnpsp.exe out/game --headless --frames 240               
 out/msvc/vnpsp/Release/vnpsp.exe out/game --play script.txt --trace trace.txt     # scripted, no window at all
 ```
 
-For the PSP, `scripts/psp-build.sh` builds `out/psp/vnpsp/EBOOT.PBP` in the pinned pspdev Docker image. Put `script.vnb` and `data.pak` next to `EBOOT.PBP` in `ms0:/PSP/GAME/<folder>/`. Saves go to `ms0:/PSP/SAVEDATA/<folder>/`, the folder name reduced to letters, digits, `_` and `-`.
+For the PSP, `scripts/psp-build.sh` builds `out/psp/vnpsp/EBOOT.PBP` in the pinned pspdev Docker image. `rpy2psp build <game> -o <folder>` wraps it with the game's title and images next to `script.vnb` and `data.pak`; copy that folder to `ms0:/PSP/GAME/`. Saves go to `ms0:/PSP/SAVEDATA/<folder>/`, the folder name reduced to letters, digits, `_` and `-`.
 
 ### Testing on a PSP-3000 (ARK-4)
 
-1. `sh scripts/psp-build.sh`, then `python -m rpy2psp compile <game> -o <out>` and `python -m rpy2psp pack <game> -o <out> --font-dir <fonts>`.
-2. Make `ms0:/PSP/GAME/<Folder>/` over USB and copy `out/psp/vnpsp/EBOOT.PBP`, `<out>/script.vnb` and `<out>/data.pak` into it.
+1. `sh scripts/psp-build.sh`, then `python -m rpy2psp build <game> -o <out>/<Folder> --font-dir <fonts>`.
+2. Copy `<out>/<Folder>` over USB to `ms0:/PSP/GAME/<Folder>/`. Check that the XMB shows the game's title, icon and background.
 3. On the PSP: Game > Memory Stick > the game. Play through the first scenes and compare with the PC `shot` PNGs.
 4. Check: text and CJK glyphs render, a choice menu works, music loops without gaps, save then load from `ms0:/PSP/SAVEDATA/<Folder>/`, rollback, and no slowdown on scene changes.
 5. For crash logs, build a PRX (`PSP_CMAKE_ARGS=-DBUILD_PRX=ON sh scripts/psp-build.sh`) and run it through psplink (`usbhostfs_pc` + `pspsh`) from `host0:` in a folder that also holds `script.vnb` and `data.pak`; exceptions print in `pspsh`.
@@ -125,4 +125,25 @@ Music is decoded with minimp3 on both platforms. `sceMp3` is not used, so the PC
 - Music loops without a gap, and the MP3 trim gives the exact length and phase.
 - Damaged saves are refused; persistent data survives a restart; no glyph is missing in any target, Japanese included.
 
-**Not verified.** The PSP build and everything specific to it: the GE renderer, the VRAM pool, the audio thread, `ms0:` saves, Memory Stick timing, and minimp3's CPU cost at 333 MHz. The PSP sources type-check against pspsdk's headers with clang for MIPS32 (`-Wall -Wextra`, no warnings), but they have not been built with psp-gcc or run on PPSSPP or the PSP-3000.
+**Verified in PPSSPP** (PPSSPPHeadless, the EBOOT from `scripts/psp-build.sh` wrapped by `rpy2psp build`):
+
+- `tests/psp/ppsspp_run.py` plays a timeline of button presses in PPSSPP and in the PC engine and compares the screenshots. For The Question (`tests/psp/the-question.timeline`: title, dialogue, a menu choice, save, more lines, load) all 15 shots match at 31 to 51 dB PSNR; the two lowest differ only in the save's timestamp, which the deterministic PC run leaves blank. The opening of the Japanese build, Zero Echoes (Chinese) and Arcance (`tests/psp/first-lines.timeline`) match at 36 to 52 dB. This covers the GE renderer with DXT and CLUT glyph textures, the VRAM pool, transitions, save thumbnails and CJK text.
+- Saves are written to `ms0:/PSP/SAVEDATA/<EBOOT folder>/` (`slot-01.sav`, `persistent.bin`), and loading slot 1 returns to the saved line.
+- `tests/psp/music_loop_check.py` records a self-made 2 s loop through PPSSPP's audio dump: the PSP mix equals the PC engine's within 1 LSB over five loops, so the audio thread, minimp3 and the gapless trim behave as on the PC.
+- Timing from the engine's log (emulated, so indicative only): start-up 54 to 70 ms, the largest first scene (Arcance, 348 KB) loads in 36 ms, 59.9 fps with 0.2 to 0.5 ms of CPU per frame, the mixer with MP3 decoding takes 4.4 to 5.3% of real time, and writing or loading a save stalls one frame for about 0.3 s.
+
+**Not verified.** The PSP-3000 itself: real Memory Stick read times (PPSSPP emulates I/O timing), minimp3's real cost at 333 MHz, memory headroom, and the XMB showing the title, ICON0 and PIC1.
+
+### Timing log
+
+On the PSP and in the PC player, the engine logs `vnpsp: started in N ms`, `vnpsp: scene <label>: <bytes> bytes in N ms` when a scene's images are prefetched, and every 5 seconds `vnpsp: perf: <fps>, frame cpu <avg> / <max> us, audio mix <share> of real time`. On the PSP these lines go to stdout, which psplink's `pspsh` and PPSSPP show. The scripted driver (`--play`) passes no clock, so its traces stay deterministic.
+
+### Testing in PPSSPP
+
+```sh
+python -m rpy2psp build <game> -o <scratch>/TheQuestion --font-dir <fonts>
+python tests/psp/ppsspp_run.py <scratch>/TheQuestion tests/psp/the-question.timeline -o <scratch>/run --vnpsp <PC vnpsp>
+python tests/psp/music_loop_check.py -o <scratch>/loop --vnpsp <PC vnpsp>
+```
+
+Both scripts run `PPSSPPHeadless` from the `ppsspp-headless:local` Docker image by default (`--ppsspp` changes the command). `ppsspp_run.py` writes `report.json` with the PSNR of each shot, the timing lines and the save files, and exits with 1 when a shot differs, a scene takes a second or more, or the engine never starts.

@@ -1,7 +1,7 @@
 """Opt-in checks against the three target games (game data stays outside the repo).
 
-Fetch them with tools/census/fetch_games.py plus a full checkout (see docs/dev/testing.md)
-and point RPY2PSP_TARGETS at the folder holding the_question/, zero_echoes/, arcance/.
+Fetch them with `python -I tools/census/fetch_games.py --full <dir> the_question arcance zero_echoes`
+and point RPY2PSP_TARGETS at <dir>.
 Skipped when the folder is missing.
 """
 
