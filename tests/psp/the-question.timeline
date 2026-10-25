@@ -1,6 +1,7 @@
 # The Question (Ren'Py sample game, MIT) built with `rpy2psp build`: title, dialogue,
-# a menu choice, save to slot 1, two more lines, then load slot 1. Text types at
-# 40 cps, so presses are 5 s apart and shots are taken 4.5 s after a press.
+# a menu choice, save to slot 1, two more lines, load slot 1, then the rest of that
+# ending and back to the title. Text types at 40 cps, so presses are 5 s apart and
+# shots are taken 4.5 s after a press.
 3.0 shot title
 4.0 press X        # Start
 8.5 shot lecture
@@ -42,4 +43,11 @@
 79.5 press UP       # Yes
 80.0 press X
 84.5 shot after-load
-85.5 end
+85.0 press X
+90.0 press X
+95.0 press X
+100.0 press X
+104.5 shot last-line
+105.0 press X
+109.5 shot back-to-title
+110.5 end
