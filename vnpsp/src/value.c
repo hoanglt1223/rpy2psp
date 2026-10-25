@@ -1124,6 +1124,14 @@ static bool parse_int(vstr *s, int64_t *out)
     return true;
 }
 
+/* strcasecmp is POSIX, not C11. */
+static bool ascii_ieq(const char *a, const char *b)
+{
+    for (; *a && *b; a++, b++)
+        if (tolower((unsigned char)*a) != tolower((unsigned char)*b)) return false;
+    return *a == *b;
+}
+
 static bool parse_float(vstr *s, double *out)
 {
     const char *p = s->data, *end = s->data + s->len;
@@ -1136,14 +1144,11 @@ static bool parse_float(vstr *s, double *out)
     tmp[n] = 0;
     const char *t = tmp + ((tmp[0] == '+' || tmp[0] == '-') ? 1 : 0);
     double sign = tmp[0] == '-' ? -1.0 : 1.0;
-#ifdef _MSC_VER
-#define strcasecmp _stricmp
-#endif
-    if (strcasecmp(t, "inf") == 0 || strcasecmp(t, "infinity") == 0) {
+    if (ascii_ieq(t, "inf") || ascii_ieq(t, "infinity")) {
         *out = sign * INFINITY;
         return true;
     }
-    if (strcasecmp(t, "nan") == 0) {
+    if (ascii_ieq(t, "nan")) {
         *out = NAN;
         return true;
     }
