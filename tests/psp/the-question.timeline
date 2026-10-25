@@ -1,0 +1,45 @@
+# The Question (Ren'Py sample game, MIT) built with `rpy2psp build`: title, dialogue,
+# a menu choice, save to slot 1, two more lines, then load slot 1. Text types at
+# 40 cps, so presses are 5 s apart and shots are taken 4.5 s after a press.
+3.0 shot title
+4.0 press X        # Start
+8.5 shot lecture
+9.0 press X
+14.0 press X
+19.0 press X
+24.0 press X
+28.5 shot uni
+29.0 press X
+33.5 shot sylvie
+34.0 press X
+39.0 press X
+44.0 press X
+48.5 shot menu
+49.0 press DOWN     # second choice: To ask her later
+50.0 shot menu-down
+50.5 press X
+55.0 shot chosen
+55.5 press START    # game menu (cursor on Return)
+56.5 shot gamemenu
+57.0 press DOWN     # Save
+57.5 press X
+58.5 shot savescreen
+59.0 press X        # slot 1
+60.5 shot saved
+61.0 press O
+62.0 press O
+63.5 shot after-save
+64.0 press X
+69.0 press X
+73.5 shot advanced
+74.0 press START
+75.0 press DOWN
+75.5 press DOWN     # Load
+76.0 press X
+77.0 shot loadscreen
+77.5 press X        # slot 1
+79.0 shot load-confirm
+79.5 press UP       # Yes
+80.0 press X
+84.5 shot after-load
+85.5 end

@@ -1,0 +1,10 @@
+# Any game: title screen, Start, then the first three lines. Shots are taken late so
+# long lines finish typing (40 cps).
+3.0 shot title
+4.0 press X
+10.0 shot line1
+11.0 press X
+17.0 shot line2
+18.0 press X
+24.0 shot line3
+26.0 end
